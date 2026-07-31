@@ -43,7 +43,7 @@ function renderTitleScreen() {
   wrap.appendChild(h1);
 
   const p = document.createElement('p');
-  p.textContent = 'Crack boxes, chase legends, build the greatest fictional football card collection ever assembled — and turn $1,000 into an empire.';
+  p.textContent = 'Crack boxes, chase legends, build the greatest fictional football card collection ever assembled — and turn your last $100 into an empire.';
   wrap.appendChild(p);
 
   const slots = listSlots();
@@ -91,7 +91,7 @@ function renderTitleScreen() {
   newGameRow.appendChild(nameInput);
   const newGameBtn = document.createElement('button');
   newGameBtn.className = 'btn btn-gold';
-  newGameBtn.textContent = '+ New Collector ($1,000 start)';
+  newGameBtn.textContent = '+ New Collector ($100 start)';
   newGameBtn.addEventListener('click', () => {
     const slotId = nextFreeSlotId();
     const game = Game.fromNew(slotId, nameInput.value.trim() || 'Rookie Collector');

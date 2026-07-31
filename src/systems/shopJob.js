@@ -6,7 +6,27 @@
 
 import { addCash } from './state.js';
 import { bus } from './eventBus.js';
-import { randInt, pick } from '../utils/rng.js';
+import { randInt, pick, pickWeighted } from '../utils/rng.js';
+import { rollLooseCard } from './packOpening.js';
+import { cardMarketValue } from './economy.js';
+
+// Physical condition of the cards a customer brings in. Multiplies the lot's
+// market value — a beat-up star card is worth a fraction of a mint one.
+export const CONDITIONS = [
+  { key: 'mint', label: 'Mint', mult: 1.1, color: '#4caf50' },
+  { key: 'near_mint', label: 'Near Mint', mult: 1.0, color: '#8fc93a' },
+  { key: 'excellent', label: 'Excellent', mult: 0.85, color: '#e8a33d' },
+  { key: 'played', label: 'Played', mult: 0.6, color: '#f7621a' },
+  { key: 'damaged', label: 'Damaged', mult: 0.35, color: '#ff5470' },
+];
+const CONDITION_WEIGHTS = [
+  { value: 'mint', weight: 10 }, { value: 'near_mint', weight: 28 }, { value: 'excellent', weight: 30 },
+  { value: 'played', weight: 22 }, { value: 'damaged', weight: 10 },
+];
+
+export function conditionOf(key) {
+  return CONDITIONS.find(c => c.key === key) || CONDITIONS[1];
+}
 
 export const CAREER_STAGES = [
   { stage: 0, title: 'Unemployed' },
@@ -63,14 +83,24 @@ export function promote(state) {
 }
 
 function randomCustomer(state, rng) {
-  const stageMult = 1 + state.shop.careerStage * 0.35;
-  const lotValue = Math.round(randInt(rng, 20, 260) * stageMult);
+  // Higher career stages attract customers with bigger (and better) lots.
+  const cardCount = randInt(rng, 1, 2 + Math.min(3, state.shop.careerStage));
+  const cards = [];
+  for (let i = 0; i < cardCount; i++) {
+    const card = rollLooseCard(rng, state.day);
+    card.condition = pickWeighted(rng, CONDITION_WEIGHTS);
+    cards.push(card);
+  }
+  const lotValue = Math.round(cards.reduce((sum, c) =>
+    sum + cardMarketValue(c, state.market) * conditionOf(c.condition).mult, 0) * 100) / 100;
   const askInflation = 0.8 + rng() * 0.5;
   return {
     id: `cust_${Date.now()}_${Math.floor(rng() * 1e6)}`,
     name: pick(rng, CUSTOMER_NAMES),
-    lotValue,
-    askPrice: Math.round(lotValue * askInflation),
+    appearanceSeed: Math.floor(rng() * 1e9),
+    cards,
+    lotValue: Math.max(0.5, lotValue),
+    askPrice: Math.max(1, Math.round(lotValue * askInflation * 100) / 100),
     resolved: false,
   };
 }
@@ -81,7 +111,7 @@ export function generateShift(state, rng = Math.random, count = 4) {
   return state.shop.currentShift;
 }
 
-const STANCES = {
+export const STANCES = {
   lowball: { offerFrac: 0.55, acceptChance: 0.4 },
   fair: { offerFrac: 0.8, acceptChance: 0.78 },
   generous: { offerFrac: 1.0, acceptChance: 0.98 },
@@ -93,7 +123,7 @@ export function negotiate(state, customerId, stanceKey, rng = Math.random) {
   const customer = shift.customers.find(c => c.id === customerId);
   if (!customer || customer.resolved) return { ok: false, reason: 'invalid-customer' };
   const stance = STANCES[stanceKey];
-  const offer = Math.round(customer.askPrice * stance.offerFrac);
+  const offer = Math.round(customer.askPrice * stance.offerFrac * 100) / 100;
   const accepted = rng() < stance.acceptChance;
   customer.resolved = true;
   customer.stance = stanceKey;
@@ -102,8 +132,8 @@ export function negotiate(state, customerId, stanceKey, rng = Math.random) {
 
   let profit = 0;
   if (accepted) {
-    const resaleValue = Math.round(customer.lotValue * 1.15);
-    profit = resaleValue - offer;
+    const resaleValue = customer.lotValue * 1.15;
+    profit = Math.round((resaleValue - offer) * 100) / 100;
     shift.profit += profit;
     customer.profit = profit;
   }

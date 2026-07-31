@@ -156,6 +156,25 @@ export class Game {
   toggleFavorite(uid) { Selling.toggleFavorite(this.state, uid); this.notify(); }
   toggleLock(uid) { Selling.toggleLock(this.state, uid); this.notify(); }
 
+  /** Sells the entire collection at buylist price (skips locked/favorited cards). */
+  sellEntireCollection() {
+    const sellable = this.state.ownedCards.filter(c => !c.locked && !c.favorite);
+    let sold = 0;
+    let total = 0;
+    for (const card of [...sellable]) {
+      const res = Selling.sellInstant(this.state, card.uid, this.state.market);
+      if (res.ok) { sold += 1; total += res.price; }
+    }
+    if (sold > 0) {
+      showToast({ text: `Sold ${sold} cards for ${money(total)}`, kind: 'success', duration: 4500 });
+    } else {
+      showToast({ text: 'Nothing sellable (locked/favorited cards are kept).', kind: 'default' });
+    }
+    this.recalcAll();
+    this.notify();
+    return { sold, total };
+  }
+
   /** Bulk-sells every duplicate copy (keeps one of each card, skips locked/favorited). */
   sellAllDuplicates() {
     const byKey = new Map();
