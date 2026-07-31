@@ -8,34 +8,37 @@ import { mulberry32, pick, pickWeighted, randInt } from '../utils/rng.js';
 
 const WORLD_SEED = 194831;
 
-// Curated signature stars — these are the "chase" names of the game, each
-// hand-placed at a high overall so they anchor the checklist and market.
+// Curated signature stars — the "chase" names of the game, each hand-placed
+// at a high overall so they anchor the checklist and market. The 4th field
+// pins each star to the fictional analog of their real-life club (e.g. the
+// Kansas Comets are this universe's Kansas City team), so the parody names
+// land on the roster fans expect.
 const SIGNATURE_STARS = [
   // Quarterbacks
-  ['Patty Myhome', 'QB', 99], ['Josh Allin', 'QB', 97], ['Lamar Jackman', 'QB', 96],
-  ['Joey Burrows', 'QB', 95], ['Justin Harbor', 'QB', 94], ['Jaylen Hart', 'QB', 93],
-  ['C.J. Strong', 'QB', 92], ['Trevor Laurence', 'QB', 91], ['Brock Pure', 'QB', 90],
-  ['Dax Prescott', 'QB', 90], ['Tua Tagalo', 'QB', 89], ['Jordan Lovell', 'QB', 88],
-  ['Aaron Rodger', 'QB', 92], ['Matt Stafforde', 'QB', 87], ['Kyler Murry', 'QB', 86],
-  ['Baker Meadow', 'QB', 85], ['Caleb Willson', 'QB', 91], ['Drake May', 'QB', 88],
-  ['Jayden Daniel', 'QB', 93], ['Bo Nick', 'QB', 86],
+  ['Patty Myhome', 'QB', 99, 'com'], ['Josh Allin', 'QB', 97, 'blz'], ['Lamar Jackman', 'QB', 96, 'rvn'],
+  ['Joey Burrows', 'QB', 95, 'bng'], ['Justin Harbor', 'QB', 94, 'bol'], ['Jaylen Hart', 'QB', 93, 'lib'],
+  ['C.J. Strong', 'QB', 92, 'txn'], ['Trevor Laurence', 'QB', 91, 'jag'], ['Brock Pure', 'QB', 90, 'gld'],
+  ['Dax Prescott', 'QB', 90, 'lng'], ['Tua Tagalo', 'QB', 89, 'wav'], ['Jordan Lovell', 'QB', 88, 'lmb'],
+  ['Aaron Rodger', 'QB', 92, 'stl2'], ['Matt Stafforde', 'QB', 87, 'rms'], ['Kyler Murry', 'QB', 86, 'crd'],
+  ['Baker Meadow', 'QB', 85, 'lgt'], ['Caleb Willson', 'QB', 91, 'wnd'], ['Drake May', 'QB', 88, 'pat'],
+  ['Jayden Daniel', 'QB', 93, 'stl'], ['Bo Nick', 'QB', 86, 'brn'],
   // Running Backs
-  ['Chris McCaffery', 'RB', 97], ['Saquan Barkly', 'RB', 96], ['Derek Henry', 'RB', 94],
-  ['Bijon Robinson', 'RB', 93], ['Jamir Gibbs', 'RB', 92], ['Jon Taylor', 'RB', 91],
-  ['Nick Chubbs', 'RB', 90], ['Bree Hall', 'RB', 89], ['Josh Jacob', 'RB', 87],
-  ['Kenny Walker', 'RB', 86],
+  ['Chris McCaffery', 'RB', 97, 'gld'], ['Saquan Barkly', 'RB', 96, 'lib'], ['Derek Henry', 'RB', 94, 'rvn'],
+  ['Bijon Robinson', 'RB', 93, 'atk'], ['Jamir Gibbs', 'RB', 92, 'mtr'], ['Jon Taylor', 'RB', 91, 'stl3'],
+  ['Nick Chubbs', 'RB', 90, 'clv'], ['Bree Hall', 'RB', 89, 'nyk'], ['Josh Jacob', 'RB', 87, 'lmb'],
+  ['Kenny Walker', 'RB', 86, 'stm'],
   // Wide Receivers
-  ['Justin Jeffers', 'WR', 97], ['Jamar Chase', 'WR', 96], ['Tyreek Hills', 'WR', 95],
-  ['C.D. Lamb', 'WR', 95], ['Amon Saint Brown', 'WR', 93], ['Luka Nakua', 'WR', 92],
-  ['Mike Evan', 'WR', 90], ['Garrett Wilton', 'WR', 89], ['D.J. Moor', 'WR', 87],
-  ['A.J. Browne', 'WR', 88], ['Devante Adamson', 'WR', 87], ['Chris Olive', 'WR', 86],
-  ['Marvin Harrison II', 'WR', 90], ['Malik Naber', 'WR', 89],
+  ['Justin Jeffers', 'WR', 97, 'vik'], ['Jamar Chase', 'WR', 96, 'bng'], ['Tyreek Hills', 'WR', 95, 'wav'],
+  ['C.D. Lamb', 'WR', 95, 'lng'], ['Amon Saint Brown', 'WR', 93, 'mtr'], ['Luka Nakua', 'WR', 92, 'rms'],
+  ['Mike Evan', 'WR', 90, 'lgt'], ['Garrett Wilton', 'WR', 89, 'nyk'], ['D.J. Moor', 'WR', 87, 'wnd'],
+  ['A.J. Browne', 'WR', 88, 'lib'], ['Devante Adamson', 'WR', 87, 'rdr'], ['Chris Olive', 'WR', 86, 'brs'],
+  ['Marvin Harrison II', 'WR', 90, 'crd'], ['Malik Naber', 'WR', 89, 'grz'],
   // Tight Ends
-  ['Travis Kelsey', 'TE', 96], ['George Kittles', 'TE', 93], ['Sam Laporta', 'TE', 90],
-  ['Mark Andrew', 'TE', 88], ['Brock Bower', 'TE', 91],
+  ['Travis Kelsey', 'TE', 96, 'com'], ['George Kittles', 'TE', 93, 'gld'], ['Sam Laporta', 'TE', 90, 'mtr'],
+  ['Mark Andrew', 'TE', 88, 'rvn'], ['Brock Bower', 'TE', 91, 'rdr'],
   // Defense
-  ['Micah Parson', 'LB', 96], ['T.J. Watts', 'DE', 95], ['Max Crosby', 'DE', 93],
-  ['Nick Bosan', 'DE', 92], ['Myles Garrettson', 'DE', 91],
+  ['Micah Parson', 'LB', 96, 'lng'], ['T.J. Watts', 'DE', 95, 'stl2'], ['Max Crosby', 'DE', 93, 'rdr'],
+  ['Nick Bosan', 'DE', 92, 'gld'], ['Myles Garrettson', 'DE', 91, 'clv'],
 ];
 
 const RARE_INSERT_YEARS = [2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026];
@@ -44,8 +47,11 @@ function makeSlug(name) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
 
-function buildPlayer({ name, position, overall, tier, rng, curated = false }) {
-  const team = pick(rng, TEAMS);
+function buildPlayer({ name, position, overall, tier, rng, curated = false, teamId = null }) {
+  // Always consume the rng draw so the procedural roster stays on the same
+  // seeded stream whether or not this player has a pinned team.
+  const rolledTeam = pick(rng, TEAMS);
+  const team = teamId ? (TEAMS.find(t => t.id === teamId) || rolledTeam) : rolledTeam;
   const year = pick(rng, RARE_INSERT_YEARS);
   const isRookie = tier === 'rookie';
   return {
@@ -66,11 +72,12 @@ function buildUniverse() {
   const players = [];
   const usedNames = new Set();
 
-  // 1. Signature stars (legend/star tier depending on overall)
-  for (const [name, position, overall] of SIGNATURE_STARS) {
+  // 1. Signature stars (legend/star tier depending on overall), each pinned
+  // to the fictional analog of their real-life club.
+  for (const [name, position, overall, teamId] of SIGNATURE_STARS) {
     usedNames.add(name);
     const tier = overall >= 95 ? 'legend' : overall >= 90 ? 'star' : 'starter';
-    players.push(buildPlayer({ name, position, overall, tier, rng, curated: true }));
+    players.push(buildPlayer({ name, position, overall, tier, rng, curated: true, teamId }));
   }
 
   // 2. Procedurally rounded-out roster across every position, weighted so
