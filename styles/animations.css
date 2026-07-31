@@ -203,40 +203,30 @@
   100% { clip-path: inset(0 0 0 100%); transform: rotate(10deg) translateX(60px); opacity: 0; }
 }
 
-/* ---------- Foil pack wrappers ---------- */
+/* ---------- Foil pack wrappers (SVG art + shimmer overlay) ---------- */
 .pack-item { position: relative; overflow: hidden; }
-.pack-foil::before {
+.pack-item.pack-foil-art {
+  background: transparent;
+  border: none;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.45);
+  width: 82px;
+  height: 118px;
+}
+.pack-foil-art svg { display: block; width: 100%; height: 100%; }
+.pack-foil-art::before {
   content: '';
   position: absolute;
   inset: -30% -70%;
-  background: linear-gradient(115deg, transparent 42%, rgba(255,255,255,0.55) 49%, rgba(255,255,255,0.12) 53%, transparent 62%);
+  background: linear-gradient(115deg, transparent 42%, rgba(255,255,255,0.5) 49%, rgba(255,255,255,0.12) 53%, transparent 62%);
   transform: translateX(-70%);
   animation: pack-shimmer 2.8s ease-in-out infinite;
   pointer-events: none;
+  z-index: 2;
 }
 @keyframes pack-shimmer {
   0% { transform: translateX(-70%); }
   55%, 100% { transform: translateX(70%); }
 }
-.pack-foil::after {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; height: 14px;
-  background: repeating-linear-gradient(90deg, rgba(255,255,255,0.22) 0 5px, rgba(0,0,0,0.18) 5px 10px);
-  border-bottom: 1px solid rgba(0,0,0,0.35);
-}
-.pack-brand {
-  position: absolute;
-  left: 0; right: 0; top: 44%;
-  text-align: center;
-  font-size: 9.5px;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  color: rgba(255,255,255,0.92);
-  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
-  pointer-events: none;
-}
-.pack-item.torn .pack-brand { opacity: 0; }
 
 /* ---------- Reveal escalation ---------- */
 .reveal-card.slow-flip .flip-inner { transition-duration: 1.05s; }
@@ -313,6 +303,18 @@
   z-index: 6;
   background: rgba(8,10,16,0.8);
 }
+
+/* ---------- Rip All summary grid ---------- */
+.reveal-row.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+  width: 100%;
+  max-width: 1100px;
+  align-items: stretch;
+  min-height: 0;
+}
+.summary-card { position: relative; }
 
 /* ---------- Box card art in shop ---------- */
 .product-box-art { display: flex; justify-content: center; }

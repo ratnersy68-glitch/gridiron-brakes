@@ -34,6 +34,13 @@ export function renderBinder(container, game) {
   progressLabel.style.fontSize = '12px';
   progressLabel.textContent = `${pct(s.stats.binderCompletionPct / 100, 3)} overall binder completion • ${s.stats.setsCompleted} sets completed`;
   header.appendChild(progressLabel);
+
+  const dupBtn = document.createElement('button');
+  dupBtn.className = 'btn btn-sm mt-8';
+  dupBtn.textContent = 'Sell All Duplicates';
+  dupBtn.title = 'Instantly sells every duplicate copy (keeps one of each; skips locked and favorited cards)';
+  dupBtn.addEventListener('click', () => game.sellAllDuplicates());
+  header.appendChild(dupBtn);
   wrap.appendChild(header);
 
   const filterPanel = document.createElement('div');

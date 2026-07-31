@@ -105,5 +105,5 @@ export function recomputeCollectionStats(state) {
 
 export function completionRewardFor(type) {
   // Cash awarded once, the moment a set completes.
-  return type === 'team' ? 750 : 1500;
+  return type === 'team' ? 400 : 800;
 }

@@ -21,7 +21,7 @@ function tierAchievement({ id, name, desc, stat, tiers, reward }) {
       icon: '🏆',
       check: (stats) => (stats[stat] || 0) >= threshold,
       progress: (stats) => Math.min(1, (stats[stat] || 0) / threshold),
-      reward: reward ? reward(threshold, i) : { cash: threshold * 0.5 },
+      reward: reward ? reward(threshold, i) : { cash: threshold * 0.2 },
     });
   });
 }
@@ -33,7 +33,7 @@ tierAchievement({
   desc: (n) => `Open ${n.toLocaleString()} total packs.`,
   stat: 'totalPacksOpened',
   tiers: [1, 10, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000],
-  reward: (n) => ({ cash: Math.max(10, n * 0.4) }),
+  reward: (n) => ({ cash: Math.max(5, n * 0.15) }),
 });
 
 tierAchievement({
@@ -42,7 +42,7 @@ tierAchievement({
   desc: (n) => `Open ${n.toLocaleString()} total boxes.`,
   stat: 'totalBoxesOpened',
   tiers: [1, 10, 50, 100, 500, 1000, 2500],
-  reward: (n) => ({ cash: n * 5 }),
+  reward: (n) => ({ cash: n * 2 }),
 });
 
 for (const box of BOXES) {
@@ -55,7 +55,7 @@ for (const box of BOXES) {
       icon: '📦',
       check: (stats) => (stats.boxesByType?.[box.key] || 0) >= n,
       progress: (stats) => Math.min(1, (stats.boxesByType?.[box.key] || 0) / n),
-      reward: { cash: box.price * n * 0.1 },
+      reward: { cash: box.price * n * 0.04 },
     });
   });
 }
@@ -87,7 +87,7 @@ for (const rarity of RARITIES) {
       icon: '💎',
       check: (stats) => (stats.rarityPulls?.[rarity.key] || 0) >= n,
       progress: (stats) => Math.min(1, (stats.rarityPulls?.[rarity.key] || 0) / n),
-      reward: { cash: rarity.valueMult * n * 2 },
+      reward: { cash: rarity.valueMult * n * 0.5 },
     });
   });
 }
@@ -149,7 +149,7 @@ tierAchievement({
   desc: (n) => `Fully complete ${n} binder set${n > 1 ? 's' : ''}.`,
   stat: 'setsCompleted',
   tiers: [1, 5, 10, 25, 50, 100],
-  reward: (n) => ({ cash: n * 250 }),
+  reward: (n) => ({ cash: n * 100 }),
 });
 
 [10, 25, 50, 75, 90, 100].forEach((pct) => {
@@ -161,7 +161,7 @@ tierAchievement({
     icon: '📖',
     check: (stats) => (stats.binderCompletionPct || 0) >= pct,
     progress: (stats) => Math.min(1, (stats.binderCompletionPct || 0) / pct),
-    reward: { cash: pct * 100 },
+    reward: { cash: pct * 40 },
   });
 });
 
@@ -174,7 +174,7 @@ for (const team of TEAMS) {
     icon: '🏟️',
     check: (stats) => (stats.teamSetsComplete || []).includes(team.id),
     progress: (stats) => (stats.teamSetsComplete || []).includes(team.id) ? 1 : (stats.teamSetProgress?.[team.id] || 0),
-    reward: { cash: 500 },
+    reward: { cash: 250 },
   });
 }
 
@@ -187,7 +187,7 @@ for (const star of CURATED_PLAYERS) {
     icon: '⭐',
     check: (stats) => (stats.playerMastered || []).includes(star.id),
     progress: (stats) => (stats.playerMastered || []).includes(star.id) ? 1 : (stats.playerMasterProgress?.[star.id] || 0),
-    reward: { cash: 1000 },
+    reward: { cash: 500 },
   });
 }
 
@@ -206,7 +206,7 @@ tierAchievement({
   desc: (n) => `Pull ${n} One-of-One card${n > 1 ? 's' : ''}.`,
   stat: 'oneOfOnesPulled',
   tiers: [1, 5, 10, 25],
-  reward: (n) => ({ cash: n * 2000 }),
+  reward: (n) => ({ cash: n * 1000 }),
 });
 
 // --- Shop & store ---------------------------------------------------------
@@ -225,7 +225,7 @@ tierAchievement({
     icon: '🏪',
     check: (stats) => (stats.careerStage || 0) >= i + 1,
     progress: (stats) => (stats.careerStage || 0) >= i + 1 ? 1 : 0,
-    reward: { cash: (i + 1) * 500 },
+    reward: { cash: (i + 1) * 250 },
   });
 });
 
@@ -240,7 +240,7 @@ for (const key of UPGRADE_KEYS) {
       icon: '🔧',
       check: (stats) => (stats.storeUpgrades?.[key] || 0) >= lvl,
       progress: (stats) => Math.min(1, (stats.storeUpgrades?.[key] || 0) / lvl),
-      reward: { cash: lvl * 200 },
+      reward: { cash: lvl * 100 },
     });
   });
 }

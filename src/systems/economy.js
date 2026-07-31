@@ -62,7 +62,7 @@ export function playerIndexOf(market, playerId) {
 
 export function cardMarketValue(card, market) {
   const idx = playerIndexOf(market, card.playerId);
-  return Math.max(1, Math.round(card.baseValue * idx));
+  return Math.max(0.1, Math.round(card.baseValue * idx * 100) / 100);
 }
 
 export function priceHistoryFor(market, playerId) {
