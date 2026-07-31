@@ -84,14 +84,28 @@ export class Game {
     checkAchievements(this.state);
   }
 
+  /** Settings default to on for saves made before the stipend existed. */
+  stipendEnabled() {
+    return this.state.settings.dailyStipend !== false;
+  }
+
+  setStipendEnabled(on) {
+    this.state.settings.dailyStipend = on;
+    this.save();
+    this.notify();
+  }
+
   // --- Day / time progression -------------------------------------------
   advanceDay() {
     this.state.day += 1;
     advanceMarketDay(this.state.market);
     const income = PlayerStore.collectPassiveIncome(this.state);
+    const stipend = this.stipendEnabled() ? StateSys.DAILY_STIPEND : 0;
+    if (stipend > 0) StateSys.addCash(this.state, stipend);
     Selling.resolveDueAuctions(this.state);
     Marketplace.refreshDailyOffers(this.state);
     this.recalcAll();
+    if (stipend > 0) showToast({ text: `Daily payout: +${money(stipend)}`, kind: 'gold', duration: 4000 });
     if (income > 0) showToast({ text: `Store passive income: +${money(income)}`, kind: 'success' });
     this.save();
     this.notify();
