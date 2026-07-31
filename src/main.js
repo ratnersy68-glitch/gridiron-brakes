@@ -8,6 +8,7 @@ import { renderBinder } from './ui/screens/binder.js';
 import { renderMarketplace } from './ui/screens/marketplace.js';
 import { renderShopJob } from './ui/screens/shopJob.js';
 import { renderStore } from './ui/screens/store.js';
+import { renderVault } from './ui/screens/vault.js';
 import { renderAchievements } from './ui/screens/achievements.js';
 import { renderSettings } from './ui/screens/settings.js';
 
@@ -38,6 +39,7 @@ const SCREEN_RENDERERS = {
   marketplace: renderMarketplace,
   shopjob: renderShopJob,
   store: renderStore,
+  vault: renderVault,
   achievements: renderAchievements,
   settings: renderSettings,
 };

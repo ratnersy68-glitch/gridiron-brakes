@@ -8,6 +8,7 @@ const TABS = [
   { key: 'marketplace', label: 'Marketplace' },
   { key: 'shopjob', label: 'Card Shop' },
   { key: 'store', label: 'My Store' },
+  { key: 'vault', label: '✦ Vault' },
   { key: 'achievements', label: 'Achievements' },
   { key: 'settings', label: 'Settings' },
 ];
@@ -53,6 +54,13 @@ export function renderShell(app, game, screenRenderers) {
     : 'Advance the market and collect passive income';
   nextDayBtn.addEventListener('click', () => { game.advanceDay(); });
   topbar.appendChild(nextDayBtn);
+
+  const nextWeekBtn = document.createElement('button');
+  nextWeekBtn.className = 'btn btn-sm btn-ghost';
+  nextWeekBtn.textContent = '+7d';
+  nextWeekBtn.title = 'Advance a full week at once';
+  nextWeekBtn.addEventListener('click', () => { game.advanceWeek(); });
+  topbar.appendChild(nextWeekBtn);
 
   app.appendChild(topbar);
 

@@ -8,6 +8,7 @@ import { BOXES } from './boxes.js';
 import { RARITIES } from './rarities.js';
 import { TEAMS } from './teams.js';
 import { CURATED_PLAYERS } from './players.js';
+import { GRAILS } from './grails.js';
 
 const achievements = [];
 
@@ -77,7 +78,7 @@ tierAchievement({
   tiers: [10, 100, 500, 1000, 5000],
 });
 
-for (const rarity of RARITIES) {
+for (const rarity of RARITIES.filter(r => r.key !== 'grail')) {
   [1, 10, 50, 100, 250].forEach((n) => {
     achievements.push({
       id: `rarity_${rarity.key}_${n}`,
@@ -260,6 +261,31 @@ tierAchievement({
   desc: (n) => `Complete ${n} trades with other collectors.`,
   stat: 'tradesMade',
   tiers: [1, 10, 50, 100],
+});
+
+// --- The Vault ------------------------------------------------------------
+for (const g of GRAILS) {
+  achievements.push({
+    id: `grail_${g.key}`,
+    name: `Secured: ${g.name}`,
+    desc: `Acquire the ${g.name} from the Vault.`,
+    category: 'vault',
+    icon: '\u2726',
+    check: (stats) => (stats.grailsOwned || []).includes(g.key),
+    progress: (stats) => (stats.grailsOwned || []).includes(g.key) ? 1 : 0,
+    reward: { cash: 0 },
+  });
+}
+
+achievements.push({
+  id: 'vault_complete',
+  name: 'Vault Complete',
+  desc: 'Own every grail in the Vault.',
+  category: 'vault',
+  icon: '\u2726',
+  check: (stats) => (stats.grailsOwned || []).length >= GRAILS.length,
+  progress: (stats) => Math.min(1, (stats.grailsOwned || []).length / GRAILS.length),
+  reward: { cash: 0 },
 });
 
 export const ACHIEVEMENTS = achievements;

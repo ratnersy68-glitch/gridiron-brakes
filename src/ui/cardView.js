@@ -3,6 +3,8 @@ import { money } from '../utils/format.js';
 import { renderPortraitSVG, renderTeamLogoSVG } from '../systems/portraitArt.js';
 import { resolveCardTemplate } from '../data/cardTemplates.js';
 import { hashString } from '../utils/rng.js';
+import { grailCardEl } from './grailCard.js';
+import { getGrail } from '../data/grails.js';
 
 const GLOW_RARITIES = new Set(['rare', 'epic', 'legendary', 'mythic', 'impossible', 'oneofone']);
 
@@ -155,6 +157,17 @@ function drawDecorativeGrid(canvas, seed) {
 }
 
 export function cardTileEl(card, { onClick, valueOverride, showValue = true } = {}) {
+  // Grails never use the standard chassis — they get their own presentation
+  // wherever they show up (binder pockets, modals, marketplace rows).
+  if (card.category === 'grail') {
+    const grail = getGrail(card.grailKey || card.typeKey);
+    if (grail) {
+      const grailEl = grailCardEl(grail, { owned: true });
+      if (onClick) grailEl.addEventListener('click', () => onClick(card, grailEl));
+      return grailEl;
+    }
+  }
+
   const el = document.createElement('div');
   el.className = 'card-tile';
   if (GLOW_RARITIES.has(card.rarityKey)) el.classList.add(`glow-${card.rarityKey}`);
