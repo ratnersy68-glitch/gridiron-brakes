@@ -13,6 +13,11 @@ export const SAVE_VERSION = 1;
 // this is a sandbox-style stipend, toggleable from Settings.
 export const DAILY_STIPEND = 1_000_000;
 
+// Above the floor the payout scales with net worth, so acquiring a grail
+// (which is itself worth trillions) compounds into the next one being
+// reachable. Without this the Vault's upper rungs would be unreachable.
+export const DAILY_PAYOUT_RATE = 0.5;
+
 const UPGRADE_KEYS = ['shelves', 'displays', 'storage', 'security', 'employees', 'advertising', 'website', 'shipping', 'tradeShowBooths'];
 
 export function createNewGame(slotId, name = 'New Collector') {
@@ -68,6 +73,7 @@ export function createNewGame(slotId, name = 'New Collector') {
       listings: [],
       auctions: [],
     },
+    grailsOwned: [],
     achievementsUnlocked: [],
     settings: { soundOn: true, dailyStipend: true },
   };

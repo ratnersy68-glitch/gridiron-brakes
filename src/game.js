@@ -18,6 +18,9 @@ import { saveSlot, startAutosave } from './systems/save.js';
 import { bus } from './systems/eventBus.js';
 import { showToast } from './ui/toast.js';
 import { money } from './utils/format.js';
+import { getGrail, makeGrailCard } from './data/grails.js';
+import { burstConfetti } from './ui/confetti.js';
+import { sfx } from './systems/sound.js';
 
 export class Game {
   constructor(state) {
@@ -105,18 +108,48 @@ export class Game {
     this.notify();
   }
 
+  /**
+   * The floor is the flat $1M stipend; above that it scales with net worth so
+   * grail-tier prices stay reachable once the ladder is underway.
+   */
+  nextDailyPayout() {
+    if (!this.stipendEnabled()) return 0;
+    const scaled = (this.state.stats.netWorth || 0) * StateSys.DAILY_PAYOUT_RATE;
+    return Math.max(StateSys.DAILY_STIPEND, scaled);
+  }
+
   // --- Day / time progression -------------------------------------------
   advanceDay() {
     this.state.day += 1;
     advanceMarketDay(this.state.market);
     const income = PlayerStore.collectPassiveIncome(this.state);
-    const stipend = this.stipendEnabled() ? StateSys.DAILY_STIPEND : 0;
+    const stipend = this.nextDailyPayout();
     if (stipend > 0) StateSys.addCash(this.state, stipend);
     Selling.resolveDueAuctions(this.state);
     Marketplace.refreshDailyOffers(this.state);
     this.recalcAll();
     if (stipend > 0) showToast({ text: `Daily payout: +${money(stipend)}`, kind: 'gold', duration: 4000 });
     if (income > 0) showToast({ text: `Store passive income: +${money(income)}`, kind: 'success' });
+    this.save();
+    this.notify();
+  }
+
+  /** Runs seven day-ticks, reporting one combined payout instead of seven toasts. */
+  advanceWeek() {
+    let totalPayout = 0;
+    for (let i = 0; i < 7; i++) {
+      this.state.day += 1;
+      advanceMarketDay(this.state.market);
+      PlayerStore.collectPassiveIncome(this.state);
+      const payout = this.nextDailyPayout();
+      if (payout > 0) StateSys.addCash(this.state, payout);
+      totalPayout += payout;
+      Selling.resolveDueAuctions(this.state);
+      StateSys.computeNetWorth(this.state, (c) => this.cardValue(c));
+    }
+    Marketplace.refreshDailyOffers(this.state);
+    this.recalcAll();
+    if (totalPayout > 0) showToast({ text: `7 days of payouts: +${money(totalPayout)}`, kind: 'gold', duration: 4500 });
     this.save();
     this.notify();
   }
@@ -151,6 +184,29 @@ export class Game {
     this.recalcAll();
     this.save();
     this.notify();
+  }
+
+  // --- The Vault ---------------------------------------------------------
+  buyGrail(key) {
+    const grail = getGrail(key);
+    if (!grail) return { ok: false, reason: 'unknown-grail' };
+    if (!this.state.grailsOwned) this.state.grailsOwned = [];
+    if (this.state.grailsOwned.includes(key)) return { ok: false, reason: 'already-owned' };
+    if (!StateSys.spendCash(this.state, grail.price)) {
+      showToast({ text: 'Not enough cash for that grail.', kind: 'danger' });
+      return { ok: false, reason: 'insufficient-funds' };
+    }
+    this.state.grailsOwned.push(key);
+    this.state.stats.grailsOwned = [...this.state.grailsOwned];
+    const card = makeGrailCard(grail, this.state.day);
+    StateSys.recordCardCollected(this.state, card);
+    burstConfetti(200);
+    sfx.announcer();
+    showToast({ text: `${grail.name} secured for ${money(grail.price)}!`, kind: 'gold', duration: 6000 });
+    this.recalcAll();
+    this.save();
+    this.notify();
+    return { ok: true, card };
   }
 
   // --- Selling ---------------------------------------------------------

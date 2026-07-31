@@ -16,6 +16,9 @@ export const RARITIES = [
   { key: 'mythic', label: 'Mythic', weight: 80, color: '#ff4d6d', valueMult: 140, glow: true },
   { key: 'impossible', label: 'Impossible', weight: 20, color: '#00e5ff', valueMult: 420, glow: true },
   { key: 'oneofone', label: 'One-of-One', weight: 2, color: '#ffffff', valueMult: 2200, glow: true },
+  // Grails sit above the pull ladder entirely: weight 0 means they can never
+  // come out of a pack. They are acquired only from the Vault.
+  { key: 'grail', label: 'Grail', weight: 0, color: '#ffd76a', valueMult: 0, glow: true },
 ];
 
 export const RARITY_ORDER = RARITIES.map(r => r.key);
