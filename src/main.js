@@ -13,6 +13,23 @@ import { renderSettings } from './ui/screens/settings.js';
 
 const app = document.getElementById('app');
 
+// A blank screen tells the player nothing. Surface any uncaught failure so a
+// bad state is reportable instead of silently fatal.
+function showFatalError(err) {
+  const detail = (err && (err.stack || err.message)) || String(err);
+  app.innerHTML = `
+    <div class="title-screen">
+      <h1>🏈 Gridiron Breaks</h1>
+      <p>Something went wrong while loading the game.</p>
+      <pre style="max-width:min(90vw,640px);overflow:auto;text-align:left;background:var(--bg-2);
+                  border:1px solid var(--border);border-radius:10px;padding:12px;font-size:11px;">${
+        detail.replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]))
+      }</pre>
+    </div>`;
+}
+window.addEventListener('error', (e) => { if (!app.childElementCount) showFatalError(e.error || e.message); });
+window.addEventListener('unhandledrejection', (e) => { if (!app.childElementCount) showFatalError(e.reason); });
+
 const SCREEN_RENDERERS = {
   home: renderHome,
   boxes: renderBoxShop,
