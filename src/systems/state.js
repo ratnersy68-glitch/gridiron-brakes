@@ -9,6 +9,10 @@ import { bus } from './eventBus.js';
 
 export const SAVE_VERSION = 1;
 
+// Cash handed out every time the player advances a day. Deliberately huge —
+// this is a sandbox-style stipend, toggleable from Settings.
+export const DAILY_STIPEND = 1_000_000;
+
 const UPGRADE_KEYS = ['shelves', 'displays', 'storage', 'security', 'employees', 'advertising', 'website', 'shipping', 'tradeShowBooths'];
 
 export function createNewGame(slotId, name = 'New Collector') {
@@ -65,7 +69,7 @@ export function createNewGame(slotId, name = 'New Collector') {
       auctions: [],
     },
     achievementsUnlocked: [],
-    settings: { soundOn: true },
+    settings: { soundOn: true, dailyStipend: true },
   };
 }
 

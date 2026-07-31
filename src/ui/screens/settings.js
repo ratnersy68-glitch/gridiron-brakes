@@ -28,6 +28,25 @@ export function renderSettings(container, game) {
   soundPanel.appendChild(soundBtn);
   wrap.appendChild(soundPanel);
 
+  const economyPanel = document.createElement('div');
+  economyPanel.className = 'panel';
+  economyPanel.innerHTML = `<div class="panel-title">Daily Payout</div>
+    <div class="muted">Bank $1,000,000 every time you advance the day. Turn this off for the normal economy, where money comes from pulls, flips, and the shop.</div>`;
+  const stipendBtn = document.createElement('button');
+  stipendBtn.className = 'btn mt-16';
+  const syncStipendBtn = () => {
+    const on = game.stipendEnabled();
+    stipendBtn.textContent = on ? '💰 Daily $1,000,000: ON' : '💰 Daily $1,000,000: OFF';
+    stipendBtn.classList.toggle('btn-gold', on);
+  };
+  stipendBtn.addEventListener('click', () => {
+    game.setStipendEnabled(!game.stipendEnabled());
+    syncStipendBtn();
+  });
+  syncStipendBtn();
+  economyPanel.appendChild(stipendBtn);
+  wrap.appendChild(economyPanel);
+
   const savePanel = document.createElement('div');
   savePanel.className = 'panel';
   savePanel.innerHTML = `<div class="panel-title">Save Data</div>`;

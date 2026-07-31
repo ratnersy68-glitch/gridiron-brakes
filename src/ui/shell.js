@@ -45,9 +45,12 @@ export function renderShell(app, game, screenRenderers) {
   topbar.appendChild(dayPill);
 
   const nextDayBtn = document.createElement('button');
-  nextDayBtn.className = 'btn btn-sm btn-ghost';
-  nextDayBtn.textContent = 'Advance Day ⏭';
-  nextDayBtn.title = 'Advance the market and collect passive income';
+  const stipendOn = game.stipendEnabled();
+  nextDayBtn.className = 'btn btn-sm ' + (stipendOn ? 'btn-gold' : 'btn-ghost');
+  nextDayBtn.textContent = stipendOn ? 'Advance Day 💰' : 'Advance Day ⏭';
+  nextDayBtn.title = stipendOn
+    ? 'Advance the market, collect passive income, and bank your $1,000,000 daily payout'
+    : 'Advance the market and collect passive income';
   nextDayBtn.addEventListener('click', () => { game.advanceDay(); });
   topbar.appendChild(nextDayBtn);
 
