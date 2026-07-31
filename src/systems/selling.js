@@ -7,9 +7,9 @@ import { cardMarketValue } from './economy.js';
 import { removeOwnedCard, addCash } from './state.js';
 import { bus } from './eventBus.js';
 
-const INSTANT_SELL_CUT = 0.8; // buylist haircut vs. true market value
-const TRADE_RATE = 0.95; // dealer swap convenience costs a little
-const AUCTION_FEE = 0.12; // house cut on the hammer price
+const INSTANT_SELL_CUT = 0.88; // buylist haircut vs. true market value
+const TRADE_RATE = 1.05; // a good swap beats the buylist
+const AUCTION_FEE = 0.07; // house cut on the hammer price
 const AUCTION_MIN_DAYS = 2;
 const AUCTION_MAX_DAYS = 4;
 
@@ -66,9 +66,9 @@ export function startAuction(state, uid, market, rng = Math.random) {
 // house fee and the downside tail mean they're a gamble, not a printer.
 function auctionOutcomeMultiplier(rarityKey, rng) {
   const spread = {
-    common: [0.5, 1.1], uncommon: [0.55, 1.2], rare: [0.6, 1.5], epic: [0.7, 1.9],
-    legendary: [0.8, 2.4], mythic: [0.9, 3], impossible: [1, 3.8], oneofone: [1.2, 5],
-  }[rarityKey] || [0.6, 1.2];
+    common: [0.65, 1.3], uncommon: [0.7, 1.45], rare: [0.75, 1.8], epic: [0.85, 2.3],
+    legendary: [0.95, 2.9], mythic: [1.05, 3.6], impossible: [1.2, 4.4], oneofone: [1.4, 6],
+  }[rarityKey] || [0.7, 1.4];
   return spread[0] + rng() * (spread[1] - spread[0]);
 }
 

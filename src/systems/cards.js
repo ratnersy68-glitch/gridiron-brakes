@@ -9,9 +9,10 @@ import { FINISHES, NUMBERED_PARALLELS, SIGNATURE_TYPES, INSERT_SETS } from '../d
 import { getRarity } from '../data/rarities.js';
 import { pick, pickWeighted, randInt } from '../utils/rng.js';
 
-// Deliberately harsh, mirroring the real hobby: commons are bulk worth
-// pennies; nearly all of a box's value concentrates in its few hits.
-const TIER_BASE_VALUE = { legend: 30, star: 8, starter: 1.2, rookie: 1.8, depth: 0.4 };
+// Mirrors the real hobby's shape — commons are bulk, nearly all of a box's
+// value concentrates in its few hits — but scaled so a good rip actually
+// pays and the grind stays fun rather than punishing.
+const TIER_BASE_VALUE = { legend: 39, star: 10.7, starter: 1.75, rookie: 2.65, depth: 0.63 };
 
 // Which player tiers are eligible per rarity slot, and how heavily weighted.
 // Mirrors the real hobby: even autograph checklists are mostly role players

@@ -5,7 +5,7 @@
 // average (like the real hobby) with value concentrated in scarce hits.
 
 export const FINISHES = [
-  { key: 'base', label: 'Base', rarity: 'common', valueMult: 1 },
+  { key: 'base', label: 'Base', rarity: 'common', valueMult: 0.55 },
   { key: 'silver', label: 'Silver', rarity: 'common', valueMult: 0.77 },
   { key: 'gold', label: 'Gold', rarity: 'uncommon', valueMult: 1.21 },
   { key: 'blue_wave', label: 'Blue Wave', rarity: 'uncommon', valueMult: 1.32 },

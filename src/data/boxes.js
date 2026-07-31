@@ -127,7 +127,7 @@ export const BOXES = [
   {
     key: 'dynasty_collection', name: 'Dynasty Collection', brand: 'Dynasty', price: 7500,
     packCount: 20, cardsPerPack: 14,
-    oddsMult: { common: 0.03, uncommon: 0.12, rare: 1.8, epic: 1.65, legendary: 1.62, mythic: 1.36, impossible: 0.8, oneofone: 0.26 },
+    oddsMult: { common: 0.03, uncommon: 0.12, rare: 1.8, epic: 1.9, legendary: 2.1, mythic: 1.8, impossible: 1.05, oneofone: 0.34 },
     guarantees: [{ type: 'numbered', count: 8 }, { type: 'signature', count: 6 }, { type: 'insert', count: 4 }],
     art: { hue1: '#b03a52', hue2: '#420f1d' },
     blurb: 'Build a dynasty binder in a single box.',
