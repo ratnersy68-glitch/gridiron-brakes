@@ -1,8 +1,15 @@
 import { cardTileEl } from '../cardView.js';
 import { burstConfetti } from '../confetti.js';
 import { sfx, revealSoundForRarity } from '../../systems/sound.js';
-import { money } from '../../utils/format.js';
+import { boxArtEl, stylePackEl } from '../boxArt.js';
 
+// Reveal escalation tiers:
+//   common/uncommon  quick flip
+//   rare             slow flip + glow
+//   epic             zoom pop + light rays
+//   legendary/mythic screen shake + spotlight + confetti
+//   impossible       all of the above, bigger
+//   oneofone         room darkens, gold beams, fireworks, card rotates in 3D
 const BIG_HIT_RARITIES = new Set(['legendary', 'mythic', 'impossible', 'oneofone']);
 const DRAMATIC_RARITIES = new Set(['rare', 'epic', 'legendary', 'mythic', 'impossible', 'oneofone']);
 
@@ -11,6 +18,30 @@ function flashScreen() {
   flash.className = 'screen-flash active';
   document.body.appendChild(flash);
   setTimeout(() => flash.remove(), 450);
+}
+
+function spotlightOverlay(duration = 1600) {
+  const el = document.createElement('div');
+  el.className = 'spotlight-overlay';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), duration);
+}
+
+function oneOfOneCeremony(cardEl) {
+  const room = document.createElement('div');
+  room.className = 'room-darken';
+  const beams = document.createElement('div');
+  beams.className = 'gold-beams';
+  room.appendChild(beams);
+  document.body.appendChild(room);
+  cardEl.classList.add('one-of-one-spin');
+  sfx.announcer();
+  burstConfetti(180);
+  setTimeout(() => burstConfetti(120), 700);
+  setTimeout(() => {
+    room.remove();
+    cardEl.classList.remove('one-of-one-spin');
+  }, 2600);
 }
 
 export function renderOpening(container, game) {
@@ -29,34 +60,42 @@ export function renderOpening(container, game) {
   wrap.appendChild(stage);
   container.appendChild(wrap);
 
-  // --- Stage 1: box ---
-  const boxEl = document.createElement('div');
-  boxEl.className = 'box-3d';
-  boxEl.textContent = '📦';
+  // --- Stage 1: the sealed box ---
+  const boxWrap = document.createElement('div');
+  boxWrap.className = 'box-3d-wrap';
+  const boxVisual = boxArtEl(box, { width: 260, height: 195 });
+  boxVisual.classList.add('box-3d-visual');
+  const shrinkWrap = document.createElement('div');
+  shrinkWrap.className = 'shrink-wrap';
+  boxWrap.appendChild(boxVisual);
+  boxWrap.appendChild(shrinkWrap);
   const boxHint = document.createElement('div');
   boxHint.className = 'muted';
-  boxHint.textContent = 'Click the box to break the wrap.';
-  stage.appendChild(boxEl);
+  boxHint.textContent = 'Tap the box to tear the shrink wrap.';
+  stage.appendChild(boxWrap);
   stage.appendChild(boxHint);
 
-  boxEl.addEventListener('click', () => {
-    boxEl.classList.add('shaking');
+  boxWrap.addEventListener('click', () => {
+    boxWrap.classList.add('rotating');
     sfx.boxShake();
     setTimeout(() => {
       sfx.wrapTear();
-      boxEl.classList.remove('shaking');
-      boxEl.classList.add('opened');
+      shrinkWrap.classList.add('torn');
+      boxWrap.classList.remove('rotating');
       setTimeout(() => {
-        stage.innerHTML = '';
-        showPackTray();
-      }, 380);
-    }, 500);
+        boxWrap.classList.add('opened');
+        setTimeout(() => {
+          stage.innerHTML = '';
+          showPackTray();
+        }, 420);
+      }, 350);
+    }, 550);
   }, { once: true });
 
   function showPackTray() {
     const title = document.createElement('div');
     title.className = 'muted';
-    title.textContent = `${totalPacks} packs — click one to rip it open`;
+    title.textContent = `${totalPacks} foil packs — tap one to rip it open`;
     stage.appendChild(title);
 
     const tray = document.createElement('div');
@@ -65,7 +104,7 @@ export function renderOpening(container, game) {
       const packEl = document.createElement('div');
       packEl.className = 'pack-item';
       packEl.style.animationDelay = `${idx * 0.05}s`;
-      packEl.textContent = '🏈';
+      stylePackEl(packEl, box);
       packEl.addEventListener('click', () => openPack(packEl, pack, idx), { once: true });
       tray.appendChild(packEl);
     });
@@ -134,21 +173,34 @@ export function renderOpening(container, game) {
         back.appendChild(tile);
         requestAnimationFrame(() => {
           outer.classList.add('flipped');
+          if (card.rarityKey === 'rare') outer.classList.add('slow-flip');
           sfx.cardFlip();
           setTimeout(() => revealSoundForRarity(card.rarityKey), 300);
+
+          if (card.rarityKey === 'epic' || card.rarityKey === 'impossible') {
+            setTimeout(() => {
+              outer.classList.add('epic-zoom');
+              const rays = document.createElement('div');
+              rays.className = 'light-rays';
+              outer.appendChild(rays);
+              setTimeout(() => rays.remove(), 1800);
+            }, 350);
+          }
 
           if (BIG_HIT_RARITIES.has(card.rarityKey)) {
             setTimeout(() => {
               outer.classList.add('big-hit-shake');
               flashScreen();
+              spotlightOverlay();
               burstConfetti(card.rarityKey === 'oneofone' ? 160 : 90);
+              if (card.rarityKey === 'oneofone') oneOfOneCeremony(outer);
             }, 350);
           }
         });
         const { isDuplicate } = game.collectCard(card);
         if (isDuplicate) {
           const dupTag = document.createElement('div');
-          dupTag.className = 'tag mt-8';
+          dupTag.className = 'tag dup-tag';
           dupTag.textContent = 'Duplicate';
           back.appendChild(dupTag);
         }

@@ -86,6 +86,7 @@ export function makeCard({ rng, rarityKey, category, typeDef, player, boxKey, so
     playerId: player.id,
     playerName: player.name,
     position: player.position,
+    overall: player.overall,
     teamId: team.id,
     teamName: team.name,
     rookieYear: player.rookieYear,

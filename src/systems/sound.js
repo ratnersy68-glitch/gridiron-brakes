@@ -77,6 +77,15 @@ export const sfx = {
     [0, 0.15, 0.3, 0.45].forEach((d, i) => tone({ freq: 500 + i * 220, dur: 0.4, type: 'sine', gain: 0.14, delay: d }));
   },
   cashRegister: () => { tone({ freq: 1200, dur: 0.08, type: 'square', gain: 0.08 }); tone({ freq: 1500, dur: 0.08, type: 'square', gain: 0.08, delay: 0.07 }); },
+  announcer: () => {
+    // stadium-horn style fanfare for the one-of-one ceremony
+    [0, 0.22, 0.44].forEach((d, i) => {
+      tone({ freq: 220 * (i + 1) / (i ? i : 1), dur: 0.5, type: 'sawtooth', gain: 0.12, delay: d });
+    });
+    tone({ freq: 110, dur: 1.2, type: 'sawtooth', gain: 0.1, delay: 0 });
+    tone({ freq: 880, dur: 0.9, type: 'sine', gain: 0.1, delay: 0.5 });
+    noiseBurst({ dur: 0.5, gain: 0.06, delay: 0.6 });
+  },
   achievement: () => { tone({ freq: 660, dur: 0.12, type: 'sine', gain: 0.1 }); tone({ freq: 880, dur: 0.18, type: 'sine', gain: 0.1, delay: 0.1 }); },
   error: () => tone({ freq: 180, dur: 0.15, type: 'sawtooth', gain: 0.08 }),
 };

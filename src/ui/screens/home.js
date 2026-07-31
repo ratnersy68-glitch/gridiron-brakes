@@ -1,6 +1,7 @@
 import { money, moneyExact, pct } from '../../utils/format.js';
 import { BOXES } from '../../data/boxes.js';
 import { CAREER_STAGES, currentStageInfo } from '../../systems/shopJob.js';
+import { boxArtEl } from '../boxArt.js';
 
 function statBlock(label, value) {
   const el = document.createElement('div');
@@ -55,10 +56,13 @@ export function renderHome(container, game) {
   popular.forEach(box => {
     const card = document.createElement('div');
     card.className = 'box-card';
-    card.innerHTML = `<div class="brand-tag">${box.brand}</div>
+    card.appendChild(boxArtEl(box));
+    const details = document.createElement('div');
+    details.innerHTML = `<div class="brand-tag">${box.brand}</div>
       <div class="box-name">${box.name}</div>
       <div class="box-blurb">${box.blurb}</div>
       <div class="price">${money(box.price)}</div>`;
+    card.appendChild(details);
     const btn = document.createElement('button');
     btn.className = 'btn btn-primary btn-block';
     btn.textContent = 'Buy & Open';
