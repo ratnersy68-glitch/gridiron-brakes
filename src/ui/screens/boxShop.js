@@ -1,5 +1,6 @@
 import { BOXES } from '../../data/boxes.js';
 import { money } from '../../utils/format.js';
+import { boxArtEl } from '../boxArt.js';
 
 export function renderBoxShop(container, game) {
   const s = game.state;
@@ -19,14 +20,16 @@ export function renderBoxShop(container, game) {
     const card = document.createElement('div');
     card.className = 'box-card';
     const guarantees = (box.guarantees || []).map(g => `${g.count}× ${g.type}`).join(', ') || 'No guarantees';
-    card.innerHTML = `
+    card.appendChild(boxArtEl(box));
+    const details = document.createElement('div');
+    details.innerHTML = `
       <div class="brand-tag">${box.brand}</div>
       <div class="box-name">${box.name}</div>
       <div class="box-blurb">${box.blurb}</div>
-      <div class="box-meta">${box.packCount} packs × ${box.cardsPerPack} cards</div>
       <div class="box-meta">Guarantees: ${guarantees}</div>
       <div class="price">${money(box.price)}</div>
     `;
+    card.appendChild(details);
     const btn = document.createElement('button');
     btn.className = 'btn btn-primary btn-block';
     btn.textContent = 'Buy & Open';
