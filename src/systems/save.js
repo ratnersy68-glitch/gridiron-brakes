@@ -41,7 +41,21 @@ export function saveSlot(id, state) {
 export function loadSlot(id) {
   const raw = localStorage.getItem(STORAGE_PREFIX + id);
   if (!raw) return null;
-  try { return JSON.parse(raw); } catch { return null; }
+  try { return migrateSave(JSON.parse(raw)); } catch { return null; }
+}
+
+// Migration: saves created before the $100-start change that were never
+// actually played (no packs, no spending, no earnings) still carry the old
+// $1,000 opening balance — bring them in line. Progressed saves are left
+// untouched.
+function migrateSave(save) {
+  const st = save?.stats || {};
+  if (save && save.cash === 1000 && (st.totalPacksOpened || 0) === 0 &&
+      (st.totalMoneySpent || 0) === 0 && (st.totalMoneyEarned || 0) === 0) {
+    save.cash = 100;
+    st.netWorth = 100;
+  }
+  return save;
 }
 
 export function deleteSlot(id) {
