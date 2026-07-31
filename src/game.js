@@ -63,7 +63,17 @@ export class Game {
   }
 
   save() {
-    saveSlot(this.state.slotId, this.state);
+    const ok = saveSlot(this.state.slotId, this.state);
+    // Warn once per session rather than on every autosave tick.
+    if (!ok && !this._warnedStorage) {
+      this._warnedStorage = true;
+      showToast({
+        text: 'Could not save — device storage is full or blocked. Selling cards frees space.',
+        kind: 'danger',
+        duration: 7000,
+      });
+    }
+    return ok;
   }
 
   startAutosave() {
