@@ -1,0 +1,182 @@
+// The game controller: owns state, wires systems together, and exposes a
+// small action API the UI screens call into. UI never mutates state
+// directly — it always goes through here so saves/achievements/stats stay
+// consistent no matter which screen triggered the change.
+
+import { createNewGame } from './systems/state.js';
+import * as StateSys from './systems/state.js';
+import { advanceMarketDay, cardMarketValue, priceHistoryFor } from './systems/economy.js';
+import { openBox } from './systems/packOpening.js';
+import { getBox } from './data/boxes.js';
+import * as Selling from './systems/selling.js';
+import * as Marketplace from './systems/marketplace.js';
+import * as ShopJob from './systems/shopJob.js';
+import * as PlayerStore from './systems/playerStore.js';
+import * as Binder from './systems/binder.js';
+import { checkAchievements } from './systems/achievementsEngine.js';
+import { saveSlot, startAutosave } from './systems/save.js';
+import { bus } from './systems/eventBus.js';
+import { showToast } from './ui/toast.js';
+import { money } from './utils/format.js';
+
+export class Game {
+  constructor(state) {
+    this.state = state;
+    this.currentScreen = 'home';
+    this.screenParams = {};
+    this.listeners = new Set();
+    this._wireEvents();
+    if (!this.state.marketplace.dailyOffers || !this.state.marketplace.dailyOffers.length) {
+      Marketplace.refreshDailyOffers(this.state);
+    }
+  }
+
+  static fromNew(slotId, name) {
+    return new Game(createNewGame(slotId, name));
+  }
+
+  static fromSave(saveData) {
+    return new Game(saveData);
+  }
+
+  _wireEvents() {
+    bus.on('toast', ({ text, kind }) => showToast({ text, kind }));
+    bus.on('set-completed', ({ type, name }) => {
+      const reward = Binder.completionRewardFor(type);
+      StateSys.addCash(this.state, reward);
+      showToast({ text: `Set complete: ${name}! +${money(reward)}`, kind: 'gold', duration: 4500 });
+    });
+    bus.on('achievements-unlocked', (list) => {
+      for (const a of list) {
+        showToast({ text: `Achievement unlocked: ${a.name}`, kind: 'gold', duration: 4000 });
+      }
+    });
+  }
+
+  onChange(fn) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
+  notify() { this.listeners.forEach(fn => fn()); }
+
+  setScreen(key, params = {}) {
+    this.currentScreen = key;
+    this.screenParams = params;
+    this.notify();
+  }
+
+  save() {
+    saveSlot(this.state.slotId, this.state);
+  }
+
+  startAutosave() {
+    startAutosave(() => this.state, 30000);
+  }
+
+  cardValue(card) {
+    return cardMarketValue(card, this.state.market);
+  }
+
+  priceHistory(playerId) {
+    return priceHistoryFor(this.state.market, playerId);
+  }
+
+  recalcAll() {
+    StateSys.computeNetWorth(this.state, (c) => this.cardValue(c));
+    Binder.recomputeCollectionStats(this.state);
+    checkAchievements(this.state);
+  }
+
+  // --- Day / time progression -------------------------------------------
+  advanceDay() {
+    this.state.day += 1;
+    advanceMarketDay(this.state.market);
+    const income = PlayerStore.collectPassiveIncome(this.state);
+    Selling.resolveDueAuctions(this.state);
+    Marketplace.refreshDailyOffers(this.state);
+    this.recalcAll();
+    if (income > 0) showToast({ text: `Store passive income: +${money(income)}`, kind: 'success' });
+    this.save();
+    this.notify();
+  }
+
+  // --- Boxes ---------------------------------------------------------------
+  buyBox(boxKey) {
+    const box = getBox(boxKey);
+    if (!box) return { ok: false };
+    if (!StateSys.spendCash(this.state, box.price)) {
+      showToast({ text: 'Not enough cash for that box.', kind: 'danger' });
+      return { ok: false, reason: 'insufficient-funds' };
+    }
+    this.state.stats.totalBoxesOpened += 1;
+    this.state.stats.boxesByType[boxKey] = (this.state.stats.boxesByType[boxKey] || 0) + 1;
+    const packs = openBox(box, this.state.day);
+    this.recalcAll();
+    this.notify();
+    return { ok: true, box, packs };
+  }
+
+  recordPackOpened() {
+    this.state.stats.totalPacksOpened += 1;
+  }
+
+  collectCard(card) {
+    const result = StateSys.recordCardCollected(this.state, card);
+    this.recalcAll();
+    return result;
+  }
+
+  finishOpening() {
+    this.recalcAll();
+    this.save();
+    this.notify();
+  }
+
+  // --- Selling ---------------------------------------------------------
+  sellInstant(uid) {
+    const res = Selling.sellInstant(this.state, uid, this.state.market);
+    if (res.ok) showToast({ text: `Sold for ${money(res.price)}`, kind: 'success' });
+    this.recalcAll();
+    this.notify();
+    return res;
+  }
+
+  tradeCard(uid) {
+    const res = Selling.tradeCard(this.state, uid, this.state.market);
+    if (res.ok) showToast({ text: `Traded for ${money(res.price)}`, kind: 'success' });
+    this.recalcAll();
+    this.notify();
+    return res;
+  }
+
+  startAuction(uid) {
+    const res = Selling.startAuction(this.state, uid, this.state.market);
+    if (res.ok) showToast({ text: `Auction started, ends day ${res.auction.endsOnDay}`, kind: 'default' });
+    this.notify();
+    return res;
+  }
+
+  toggleFavorite(uid) { Selling.toggleFavorite(this.state, uid); this.notify(); }
+  toggleLock(uid) { Selling.toggleLock(this.state, uid); this.notify(); }
+
+  fulfillOffer(offerId, uid) {
+    const res = Marketplace.fulfillOffer(this.state, offerId, uid, this.state.market);
+    if (res.ok) showToast({ text: `Sold to collector for ${money(res.price)}`, kind: 'success' });
+    this.recalcAll();
+    this.notify();
+    return res;
+  }
+
+  // --- Shop job ----------------------------------------------------------
+  applyForJob() { const r = ShopJob.applyForJob(this.state); this.notify(); return r; }
+  generateShift() { const r = ShopJob.generateShift(this.state); this.notify(); return r; }
+  negotiate(customerId, stance) { const r = ShopJob.negotiate(this.state, customerId, stance); this.notify(); return r; }
+  endShift() { const r = ShopJob.endShift(this.state); this.recalcAll(); this.notify(); return r; }
+  promote() { const r = ShopJob.promote(this.state); this.recalcAll(); this.notify(); return r; }
+  eligibleForPromotion() { return ShopJob.eligibleForPromotion(this.state); }
+
+  // --- Player store --------------------------------------------------------
+  purchaseUpgrade(key) {
+    const r = PlayerStore.purchaseUpgrade(this.state, key);
+    if (!r.ok) showToast({ text: 'Cannot purchase upgrade.', kind: 'danger' });
+    this.notify();
+    return r;
+  }
+}
