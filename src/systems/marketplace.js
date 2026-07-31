@@ -36,7 +36,7 @@ export function refreshDailyOffers(state, rng = Math.random, count = 6) {
   const offers = [];
   for (let i = 0; i < count; i++) {
     const ask = randomAsk(rng);
-    const premium = 1.1 + rng() * 0.55; // 110%-165% of market value
+    const premium = 1.05 + rng() * 0.3; // 105%-135% of market value
     offers.push({
       id: `offer_${state.day}_${i}`,
       buyer: pick(rng, COLLECTOR_HANDLES),
@@ -55,7 +55,7 @@ export function offerMatches(offer, card) {
 }
 
 export function quoteOffer(offer, card, market) {
-  return Math.max(1, Math.round(cardMarketValue(card, market) * offer.premium));
+  return Math.max(0.05, Math.round(cardMarketValue(card, market) * offer.premium * 100) / 100);
 }
 
 export function fulfillOffer(state, offerId, uid, market) {

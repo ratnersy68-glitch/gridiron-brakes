@@ -100,15 +100,25 @@ export function renderOpening(container, game) {
 
     const tray = document.createElement('div');
     tray.className = 'pack-tray';
+    const packEls = [];
     packs.forEach((pack, idx) => {
       const packEl = document.createElement('div');
       packEl.className = 'pack-item';
       packEl.style.animationDelay = `${idx * 0.05}s`;
       stylePackEl(packEl, box);
+      packEl._pack = pack;
       packEl.addEventListener('click', () => openPack(packEl, pack, idx), { once: true });
+      packEls.push(packEl);
       tray.appendChild(packEl);
     });
     stage.appendChild(tray);
+
+    const ripAllBtn = document.createElement('button');
+    ripAllBtn.className = 'btn btn-ghost btn-sm';
+    ripAllBtn.textContent = '⚡ Rip All Packs';
+    ripAllBtn.title = 'Skip the pack-by-pack ritual and open everything at once';
+    ripAllBtn.addEventListener('click', () => ripAllRemaining(packEls, ripAllBtn));
+    stage.appendChild(ripAllBtn);
 
     const revealZone = document.createElement('div');
     revealZone.className = 'reveal-row';
@@ -125,6 +135,55 @@ export function renderOpening(container, game) {
     });
     stage.appendChild(finishBtn);
     stage._finishBtn = finishBtn;
+  }
+
+  function ripAllRemaining(packEls, ripAllBtn) {
+    ripAllBtn.disabled = true;
+    sfx.packRip();
+    const remaining = packEls.filter(el => !el.classList.contains('used') && !el.classList.contains('torn'));
+    const allCards = [];
+    for (const el of remaining) {
+      el.classList.add('torn', 'used');
+      game.recordPackOpened();
+      allCards.push(...el._pack);
+    }
+    openedCount = totalPacks;
+    revealAllFast(allCards);
+    setTimeout(() => { stage._finishBtn.style.display = 'inline-flex'; }, 600);
+  }
+
+  // Compact fast reveal for Rip All: every card lands face-up in a summary
+  // grid with a quick stagger; hits keep their glow and one confetti burst
+  // fires if the batch contains anything legendary or better.
+  function revealAllFast(cards) {
+    const zone = document.getElementById('reveal-zone');
+    zone.innerHTML = '';
+    zone.classList.add('summary-grid');
+    let hasBigHit = false;
+    let hasOneOfOne = false;
+    cards.forEach((card, i) => {
+      const holder = document.createElement('div');
+      holder.className = 'summary-card fade-in';
+      holder.style.animationDelay = `${Math.min(i * 0.03, 1.2)}s`;
+      holder.appendChild(cardTileEl(card, { showValue: true, valueOverride: game.cardValue(card) }));
+      const { isDuplicate } = game.collectCard(card);
+      if (isDuplicate) {
+        const dupTag = document.createElement('div');
+        dupTag.className = 'tag dup-tag';
+        dupTag.textContent = 'Duplicate';
+        holder.appendChild(dupTag);
+      }
+      if (BIG_HIT_RARITIES.has(card.rarityKey)) hasBigHit = true;
+      if (card.rarityKey === 'oneofone') hasOneOfOne = true;
+      zone.appendChild(holder);
+    });
+    if (hasBigHit) {
+      setTimeout(() => {
+        flashScreen();
+        burstConfetti(hasOneOfOne ? 160 : 80);
+        if (hasOneOfOne) sfx.announcer(); else sfx.revealLegendary();
+      }, 500);
+    }
   }
 
   function openPack(packEl, pack, idx) {

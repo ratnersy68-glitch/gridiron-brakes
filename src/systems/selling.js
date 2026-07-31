@@ -7,13 +7,14 @@ import { cardMarketValue } from './economy.js';
 import { removeOwnedCard, addCash } from './state.js';
 import { bus } from './eventBus.js';
 
-const INSTANT_SELL_CUT = 0.88; // buylist haircut vs. true market value
-const TRADE_BONUS = 1.15;
+const INSTANT_SELL_CUT = 0.8; // buylist haircut vs. true market value
+const TRADE_RATE = 0.95; // dealer swap convenience costs a little
+const AUCTION_FEE = 0.12; // house cut on the hammer price
 const AUCTION_MIN_DAYS = 2;
 const AUCTION_MAX_DAYS = 4;
 
 export function quoteInstantSell(card, market) {
-  return Math.max(1, Math.round(cardMarketValue(card, market) * INSTANT_SELL_CUT));
+  return Math.max(0.05, Math.round(cardMarketValue(card, market) * INSTANT_SELL_CUT * 100) / 100);
 }
 
 export function sellInstant(state, uid, market) {
@@ -32,7 +33,7 @@ export function tradeCard(state, uid, market) {
   const card = state.ownedCards.find(c => c.uid === uid);
   if (!card) return { ok: false, reason: 'not-found' };
   if (card.locked) return { ok: false, reason: 'locked' };
-  const price = Math.max(1, Math.round(cardMarketValue(card, market) * TRADE_BONUS));
+  const price = Math.max(0.05, Math.round(cardMarketValue(card, market) * TRADE_RATE * 100) / 100);
   removeOwnedCard(state, uid);
   addCash(state, price);
   state.stats.tradesMade += 1;
@@ -60,13 +61,14 @@ export function startAuction(state, uid, market, rng = Math.random) {
   return { ok: true, auction };
 }
 
-// Rarer cards swing further above (and slightly below) market since demand
-// for chase cards is spikier than for commons.
+// Rarer cards swing further above (and below) market since demand for chase
+// cards is spikier than for commons. Auctions can beat instant-sell, but the
+// house fee and the downside tail mean they're a gamble, not a printer.
 function auctionOutcomeMultiplier(rarityKey, rng) {
   const spread = {
-    common: [0.7, 1.15], uncommon: [0.75, 1.3], rare: [0.8, 1.6], epic: [0.85, 2.1],
-    legendary: [0.9, 2.8], mythic: [1, 3.6], impossible: [1.1, 4.5], oneofone: [1.3, 6],
-  }[rarityKey] || [0.8, 1.3];
+    common: [0.5, 1.1], uncommon: [0.55, 1.2], rare: [0.6, 1.5], epic: [0.7, 1.9],
+    legendary: [0.8, 2.4], mythic: [0.9, 3], impossible: [1, 3.8], oneofone: [1.2, 5],
+  }[rarityKey] || [0.6, 1.2];
   return spread[0] + rng() * (spread[1] - spread[0]);
 }
 
@@ -75,7 +77,7 @@ export function resolveDueAuctions(state, rng = Math.random) {
   for (const auction of state.marketplace.auctions) {
     if (auction.resolved || auction.endsOnDay > state.day) continue;
     const mult = auctionOutcomeMultiplier(auction.card.rarityKey, rng);
-    const price = Math.max(1, Math.round(auction.startingValue * mult));
+    const price = Math.max(0.05, Math.round(auction.startingValue * mult * (1 - AUCTION_FEE) * 100) / 100);
     auction.resolved = true;
     auction.finalPrice = price;
     addCash(state, price);

@@ -9,20 +9,23 @@ import { FINISHES, NUMBERED_PARALLELS, SIGNATURE_TYPES, INSERT_SETS } from '../d
 import { getRarity } from '../data/rarities.js';
 import { pick, pickWeighted, randInt } from '../utils/rng.js';
 
-const TIER_BASE_VALUE = { legend: 550, star: 130, starter: 38, rookie: 48, depth: 9 };
+// Deliberately harsh, mirroring the real hobby: commons are bulk worth
+// pennies; nearly all of a box's value concentrates in its few hits.
+const TIER_BASE_VALUE = { legend: 30, star: 8, starter: 1.2, rookie: 1.8, depth: 0.4 };
 
 // Which player tiers are eligible per rarity slot, and how heavily weighted.
-// Keeps commons full of scrubs/rookies and legendaries reserved for stars,
-// which is what makes cracking a big box feel earned.
+// Mirrors the real hobby: even autograph checklists are mostly role players
+// and rookies — star and legend hits exist at every tier but stay scarce,
+// which is exactly what makes them the chase.
 const RARITY_PLAYER_WEIGHTS = {
-  common: { depth: 70, rookie: 20, starter: 10 },
-  uncommon: { depth: 40, rookie: 25, starter: 30, star: 5 },
-  rare: { depth: 15, rookie: 20, starter: 40, star: 20, legend: 5 },
-  epic: { starter: 25, rookie: 20, star: 40, legend: 15 },
-  legendary: { star: 45, legend: 55 },
-  mythic: { star: 35, legend: 65 },
-  impossible: { star: 25, legend: 75 },
-  oneofone: { legend: 100 },
+  common: { depth: 75, rookie: 15, starter: 10 },
+  uncommon: { depth: 55, rookie: 20, starter: 22, star: 3 },
+  rare: { depth: 35, rookie: 25, starter: 32, star: 7, legend: 1 },
+  epic: { depth: 25, rookie: 25, starter: 35, star: 12, legend: 3 },
+  legendary: { depth: 18, rookie: 25, starter: 35, star: 17, legend: 5 },
+  mythic: { rookie: 22, starter: 35, star: 30, legend: 13 },
+  impossible: { rookie: 15, starter: 25, star: 38, legend: 22 },
+  oneofone: { starter: 15, rookie: 15, star: 40, legend: 30 },
 };
 
 export const CATEGORY_POOLS = {
@@ -72,11 +75,11 @@ export function makeCard({ rng, rarityKey, category, typeDef, player, boxKey, so
   const isNumbered = category === 'numbered';
   const serial = isNumbered ? randInt(rng, 1, typeDef.run) : null;
 
-  const base = TIER_BASE_VALUE[player.tier] ?? 20;
+  const base = TIER_BASE_VALUE[player.tier] ?? 1;
   let value = base * (typeDef.valueMult ?? 1);
   if (isNumbered) value *= serialFlavorMult(serial);
   if (player.isRookie) value *= 1.15;
-  value = Math.max(1, Math.round(value));
+  value = Math.max(0.25, Math.round(value * 100) / 100);
 
   const key = dedupeKey({ playerId: player.id, category, typeKey: typeDef.key });
 

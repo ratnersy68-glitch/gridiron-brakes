@@ -7,7 +7,7 @@ export const BOXES = [
   {
     key: 'starter', name: 'Starter Box', brand: 'Panin', price: 25,
     packCount: 4, cardsPerPack: 6,
-    oddsMult: { common: 1, uncommon: 0.9, rare: 0.6, epic: 0.3, legendary: 0.15, mythic: 0.05, impossible: 0.02, oneofone: 0.005 },
+    oddsMult: { common: 1.0, uncommon: 0.9, rare: 0.6, epic: 0.165, legendary: 0.0675, mythic: 0.02, impossible: 0.008, oneofone: 0.002 },
     guarantees: [],
     art: { hue1: '#2e6fb0', hue2: '#123a63' },
     blurb: 'The classic entry point. Light on odds, big on nostalgia.',
@@ -15,7 +15,7 @@ export const BOXES = [
   {
     key: 'value', name: 'Value Box', brand: 'Toppz', price: 40,
     packCount: 6, cardsPerPack: 6,
-    oddsMult: { common: 1, uncommon: 1, rare: 0.7, epic: 0.35, legendary: 0.18, mythic: 0.06, impossible: 0.025, oneofone: 0.006 },
+    oddsMult: { common: 1.0, uncommon: 1.0, rare: 0.7, epic: 0.1925, legendary: 0.081, mythic: 0.024, impossible: 0.01, oneofone: 0.0024 },
     guarantees: [],
     art: { hue1: '#3f8f5a', hue2: '#174a2a' },
     blurb: 'A few more packs, a few more shots at something shiny.',
@@ -23,7 +23,7 @@ export const BOXES = [
   {
     key: 'blaster', name: 'Blaster Box', brand: 'Donrus', price: 60,
     packCount: 7, cardsPerPack: 7,
-    oddsMult: { common: 0.95, uncommon: 1, rare: 0.85, epic: 0.45, legendary: 0.22, mythic: 0.08, impossible: 0.03, oneofone: 0.008 },
+    oddsMult: { common: 0.95, uncommon: 1.0, rare: 0.85, epic: 0.2475, legendary: 0.099, mythic: 0.032, impossible: 0.012, oneofone: 0.0032 },
     guarantees: [{ type: 'numbered', count: 1 }],
     art: { hue1: '#c8443c', hue2: '#5e1713' },
     blurb: 'Guaranteed numbered parallel in every box.',
@@ -31,7 +31,7 @@ export const BOXES = [
   {
     key: 'retail', name: 'Retail Box', brand: 'Chosen', price: 70,
     packCount: 8, cardsPerPack: 7,
-    oddsMult: { common: 0.9, uncommon: 1, rare: 0.95, epic: 0.5, legendary: 0.26, mythic: 0.09, impossible: 0.035, oneofone: 0.009 },
+    oddsMult: { common: 0.9, uncommon: 1.0, rare: 0.95, epic: 0.275, legendary: 0.117, mythic: 0.036, impossible: 0.014, oneofone: 0.0036 },
     guarantees: [{ type: 'numbered', count: 1 }],
     art: { hue1: '#7a52c7', hue2: '#33205e' },
     blurb: 'Shelf-friendly, but with real hit potential.',
@@ -39,15 +39,15 @@ export const BOXES = [
   {
     key: 'mega', name: 'Mega Box', brand: 'Mosaico', price: 90,
     packCount: 9, cardsPerPack: 8,
-    oddsMult: { common: 0.85, uncommon: 1, rare: 1.05, epic: 0.6, legendary: 0.32, mythic: 0.12, impossible: 0.045, oneofone: 0.011 },
-    guarantees: [{ type: 'numbered', count: 1 }, { type: 'insert', count: 1 }],
+    oddsMult: { common: 0.85, uncommon: 1.0, rare: 1.05, epic: 0.2, legendary: 0.1, mythic: 0.035, impossible: 0.013, oneofone: 0.0032 },
+    guarantees: [{ type: 'numbered', count: 2 }],
     art: { hue1: '#e0722c', hue2: '#6b2f0d' },
-    blurb: 'Extra packs and an insert slot every time.',
+    blurb: 'Extra packs and two numbered parallels every time.',
   },
   {
     key: 'collector', name: 'Collector Box', brand: 'Prismo', price: 150,
     packCount: 10, cardsPerPack: 8,
-    oddsMult: { common: 0.75, uncommon: 1, rare: 1.3, epic: 0.85, legendary: 0.5, mythic: 0.2, impossible: 0.08, oneofone: 0.02 },
+    oddsMult: { common: 0.75, uncommon: 1.0, rare: 1.3, epic: 0.4675, legendary: 0.225, mythic: 0.08, impossible: 0.032, oneofone: 0.008 },
     guarantees: [{ type: 'numbered', count: 2 }, { type: 'insert', count: 1 }],
     art: { hue1: '#c53f7e', hue2: '#57123a' },
     blurb: 'Built for collectors chasing full parallel runs.',
@@ -55,7 +55,7 @@ export const BOXES = [
   {
     key: 'premium', name: 'Premium Box', brand: 'Absolute Edge', price: 250,
     packCount: 10, cardsPerPack: 9,
-    oddsMult: { common: 0.6, uncommon: 1, rare: 1.6, epic: 1.2, legendary: 0.75, mythic: 0.32, impossible: 0.13, oneofone: 0.032 },
+    oddsMult: { common: 0.6, uncommon: 1.0, rare: 1.6, epic: 0.66, legendary: 0.3375, mythic: 0.128, impossible: 0.052, oneofone: 0.0128 },
     guarantees: [{ type: 'numbered', count: 2 }, { type: 'signature', count: 1 }],
     art: { hue1: '#3aa6a0', hue2: '#124744' },
     blurb: 'A guaranteed signature slot — the first real business investment.',
@@ -63,7 +63,7 @@ export const BOXES = [
   {
     key: 'hobby', name: 'Hobby Box', brand: 'Challengers', price: 350,
     packCount: 12, cardsPerPack: 9,
-    oddsMult: { common: 0.5, uncommon: 0.95, rare: 1.8, epic: 1.5, legendary: 1, mythic: 0.45, impossible: 0.18, oneofone: 0.045 },
+    oddsMult: { common: 0.5, uncommon: 0.95, rare: 1.8, epic: 0.825, legendary: 0.45, mythic: 0.18, impossible: 0.072, oneofone: 0.018 },
     guarantees: [{ type: 'numbered', count: 2 }, { type: 'signature', count: 1 }, { type: 'insert', count: 1 }],
     art: { hue1: '#b0332e', hue2: '#4d0f0d' },
     blurb: 'The gold standard hobby product for serious collectors.',
@@ -71,7 +71,7 @@ export const BOXES = [
   {
     key: 'elite_hobby', name: 'Elite Hobby', brand: 'Elite Prestige', price: 500,
     packCount: 12, cardsPerPack: 10,
-    oddsMult: { common: 0.4, uncommon: 0.9, rare: 2, epic: 1.8, legendary: 1.3, mythic: 0.6, impossible: 0.26, oneofone: 0.065 },
+    oddsMult: { common: 0.4, uncommon: 0.9, rare: 2.0, epic: 0.99, legendary: 0.585, mythic: 0.24, impossible: 0.104, oneofone: 0.026 },
     guarantees: [{ type: 'numbered', count: 3 }, { type: 'signature', count: 1 }, { type: 'insert', count: 1 }],
     art: { hue1: '#8a9bb0', hue2: '#2e3a4a' },
     blurb: 'Elevated odds across the board.',
@@ -79,7 +79,7 @@ export const BOXES = [
   {
     key: 'prismo_hobby', name: 'Prismo Hobby', brand: 'Prismo', price: 650,
     packCount: 14, cardsPerPack: 10,
-    oddsMult: { common: 0.35, uncommon: 0.85, rare: 2.1, epic: 2, legendary: 1.5, mythic: 0.75, impossible: 0.33, oneofone: 0.085 },
+    oddsMult: { common: 0.35, uncommon: 0.85, rare: 2.1, epic: 1.1, legendary: 0.675, mythic: 0.3, impossible: 0.132, oneofone: 0.034 },
     guarantees: [{ type: 'numbered', count: 3 }, { type: 'signature', count: 2 }],
     art: { hue1: '#b16bff', hue2: '#3d1a66' },
     blurb: 'Two guaranteed signatures. Chrome and mirror parallels included.',
@@ -87,7 +87,7 @@ export const BOXES = [
   {
     key: 'genesis_hobby', name: 'Genesis Hobby', brand: 'Genesis', price: 750,
     packCount: 14, cardsPerPack: 11,
-    oddsMult: { common: 0.3, uncommon: 0.8, rare: 2.2, epic: 2.1, legendary: 1.7, mythic: 0.9, impossible: 0.4, oneofone: 0.1 },
+    oddsMult: { common: 0.3, uncommon: 0.8, rare: 2.2, epic: 1.155, legendary: 0.765, mythic: 0.36, impossible: 0.16, oneofone: 0.04 },
     guarantees: [{ type: 'numbered', count: 3 }, { type: 'signature', count: 2 }, { type: 'insert', count: 1 }],
     art: { hue1: '#caa14a', hue2: '#4d3a12' },
     blurb: 'Where legit high-end collecting begins.',
@@ -95,7 +95,7 @@ export const BOXES = [
   {
     key: 'national_vault', name: 'National Vault', brand: 'National Vault', price: 1200,
     packCount: 16, cardsPerPack: 11,
-    oddsMult: { common: 0.2, uncommon: 0.6, rare: 2.4, epic: 2.5, legendary: 2.2, mythic: 1.3, impossible: 0.6, oneofone: 0.16 },
+    oddsMult: { common: 0.2, uncommon: 0.6, rare: 2.4, epic: 1.375, legendary: 0.99, mythic: 0.52, impossible: 0.24, oneofone: 0.064 },
     guarantees: [{ type: 'numbered', count: 4 }, { type: 'signature', count: 3 }, { type: 'insert', count: 1 }],
     art: { hue1: '#d9b74a', hue2: '#4a3a0e' },
     blurb: 'Every card numbered or better. A true hit box.',
@@ -103,7 +103,7 @@ export const BOXES = [
   {
     key: 'legend_collection', name: 'Legend Collection', brand: 'Legends', price: 1800,
     packCount: 16, cardsPerPack: 12,
-    oddsMult: { common: 0.12, uncommon: 0.45, rare: 2.5, epic: 2.8, legendary: 2.6, mythic: 1.7, impossible: 0.8, oneofone: 0.22 },
+    oddsMult: { common: 0.12, uncommon: 0.45, rare: 2.5, epic: 1.54, legendary: 1.17, mythic: 0.68, impossible: 0.32, oneofone: 0.088 },
     guarantees: [{ type: 'numbered', count: 4 }, { type: 'signature', count: 3 }, { type: 'insert', count: 2 }],
     art: { hue1: '#8a5fd4', hue2: '#2c1a52' },
     blurb: 'Stacked with legend-tier autographs.',
@@ -111,7 +111,7 @@ export const BOXES = [
   {
     key: 'hof_collection', name: 'Hall of Fame Collection', brand: 'Hall of Fame', price: 2500,
     packCount: 18, cardsPerPack: 12,
-    oddsMult: { common: 0.08, uncommon: 0.3, rare: 2.4, epic: 3, legendary: 3, mythic: 2.2, impossible: 1.1, oneofone: 0.32 },
+    oddsMult: { common: 0.08, uncommon: 0.3, rare: 2.4, epic: 1.65, legendary: 1.35, mythic: 0.88, impossible: 0.44, oneofone: 0.128 },
     guarantees: [{ type: 'numbered', count: 5 }, { type: 'signature', count: 4 }, { type: 'insert', count: 2 }],
     art: { hue1: '#c98a3f', hue2: '#4d2e0d' },
     blurb: 'Enshrined greats. A true showcase box.',
@@ -119,7 +119,7 @@ export const BOXES = [
   {
     key: 'championship_collection', name: 'Championship Collection', brand: 'Championship', price: 4000,
     packCount: 20, cardsPerPack: 13,
-    oddsMult: { common: 0.05, uncommon: 0.2, rare: 2.2, epic: 3.2, legendary: 3.4, mythic: 2.8, impossible: 1.5, oneofone: 0.45 },
+    oddsMult: { common: 0.05, uncommon: 0.2, rare: 2.2, epic: 1.76, legendary: 1.53, mythic: 1.12, impossible: 0.6, oneofone: 0.18 },
     guarantees: [{ type: 'numbered', count: 6 }, { type: 'signature', count: 5 }, { type: 'insert', count: 3 }],
     art: { hue1: '#e0b04a', hue2: '#5e4310' },
     blurb: 'Championship-tier hits, top to bottom.',
@@ -127,7 +127,7 @@ export const BOXES = [
   {
     key: 'dynasty_collection', name: 'Dynasty Collection', brand: 'Dynasty', price: 7500,
     packCount: 20, cardsPerPack: 14,
-    oddsMult: { common: 0.03, uncommon: 0.12, rare: 1.8, epic: 3, legendary: 3.6, mythic: 3.4, impossible: 2, oneofone: 0.65 },
+    oddsMult: { common: 0.03, uncommon: 0.12, rare: 1.8, epic: 1.65, legendary: 1.62, mythic: 1.36, impossible: 0.8, oneofone: 0.26 },
     guarantees: [{ type: 'numbered', count: 8 }, { type: 'signature', count: 6 }, { type: 'insert', count: 4 }],
     art: { hue1: '#b03a52', hue2: '#420f1d' },
     blurb: 'Build a dynasty binder in a single box.',
@@ -135,7 +135,7 @@ export const BOXES = [
   {
     key: 'ultimate_chest', name: 'Ultimate Collector Chest', brand: 'Ultimate', price: 15000,
     packCount: 24, cardsPerPack: 15,
-    oddsMult: { common: 0.01, uncommon: 0.05, rare: 1.2, epic: 2.6, legendary: 3.8, mythic: 4.2, impossible: 3, oneofone: 1.2 },
+    oddsMult: { common: 0.01, uncommon: 0.05, rare: 1.2, epic: 1.43, legendary: 1.71, mythic: 1.68, impossible: 1.2, oneofone: 0.48 },
     guarantees: [{ type: 'numbered', count: 10 }, { type: 'signature', count: 8 }, { type: 'insert', count: 6 }, { type: 'oneofone', count: 1 }],
     art: { hue1: '#4ad9e0', hue2: '#0d3f47' },
     blurb: 'The whale box. A guaranteed one-of-one, every single time.',

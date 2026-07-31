@@ -1,0 +1,7 @@
+{
+  "name": "gridiron-breaks",
+  "version": "1.0.0",
+  "description": "Fictional football trading card collecting game (static ES-module web app)",
+  "type": "module",
+  "private": true
+}

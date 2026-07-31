@@ -156,6 +156,35 @@ export class Game {
   toggleFavorite(uid) { Selling.toggleFavorite(this.state, uid); this.notify(); }
   toggleLock(uid) { Selling.toggleLock(this.state, uid); this.notify(); }
 
+  /** Bulk-sells every duplicate copy (keeps one of each card, skips locked/favorited). */
+  sellAllDuplicates() {
+    const byKey = new Map();
+    for (const card of this.state.ownedCards) {
+      if (!byKey.has(card.key)) byKey.set(card.key, []);
+      byKey.get(card.key).push(card);
+    }
+    let sold = 0;
+    let total = 0;
+    for (const copies of byKey.values()) {
+      if (copies.length < 2) continue;
+      // Keep the most valuable copy; sell the rest.
+      copies.sort((a, b) => this.cardValue(b) - this.cardValue(a));
+      for (const dup of copies.slice(1)) {
+        if (dup.locked || dup.favorite) continue;
+        const res = Selling.sellInstant(this.state, dup.uid, this.state.market);
+        if (res.ok) { sold += 1; total += res.price; }
+      }
+    }
+    if (sold > 0) {
+      showToast({ text: `Sold ${sold} duplicates for ${money(total)}`, kind: 'success' });
+    } else {
+      showToast({ text: 'No sellable duplicates found.', kind: 'default' });
+    }
+    this.recalcAll();
+    this.notify();
+    return { sold, total };
+  }
+
   fulfillOffer(offerId, uid) {
     const res = Marketplace.fulfillOffer(this.state, offerId, uid, this.state.market);
     if (res.ok) showToast({ text: `Sold to collector for ${money(res.price)}`, kind: 'success' });

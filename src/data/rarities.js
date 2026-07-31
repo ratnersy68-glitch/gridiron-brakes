@@ -3,15 +3,19 @@
 // that box's odds modifier. Higher tiers carry much higher value multipliers
 // to reward the payoff of a rare pull.
 
+// Baseline weights are modeled on real retail pull rates: ~80% commons,
+// hits are genuinely scarce (a real premium hobby box of ~144 cards averages
+// only ~2 autos and ~10 numbered parallels; case-hit inserts run 1-in-
+// thousands of cards). Box oddsMult shifts these, but never into easy money.
 export const RARITIES = [
-  { key: 'common', label: 'Common', weight: 5500, color: '#9aa0a6', valueMult: 1, glow: false },
-  { key: 'uncommon', label: 'Uncommon', weight: 2500, color: '#4caf50', valueMult: 2.2, glow: false },
-  { key: 'rare', label: 'Rare', weight: 1200, color: '#2f9bff', valueMult: 5, glow: true },
-  { key: 'epic', label: 'Epic', weight: 500, color: '#a259ff', valueMult: 14, glow: true },
-  { key: 'legendary', label: 'Legendary', weight: 180, color: '#ffb100', valueMult: 45, glow: true },
-  { key: 'mythic', label: 'Mythic', weight: 65, color: '#ff4d6d', valueMult: 140, glow: true },
-  { key: 'impossible', label: 'Impossible', weight: 45, color: '#00e5ff', valueMult: 420, glow: true },
-  { key: 'oneofone', label: 'One-of-One', weight: 6, color: '#ffffff', valueMult: 2200, glow: true },
+  { key: 'common', label: 'Common', weight: 80000, color: '#9aa0a6', valueMult: 1, glow: false },
+  { key: 'uncommon', label: 'Uncommon', weight: 14000, color: '#4caf50', valueMult: 2.2, glow: false },
+  { key: 'rare', label: 'Rare', weight: 4500, color: '#2f9bff', valueMult: 5, glow: true },
+  { key: 'epic', label: 'Epic', weight: 1050, color: '#a259ff', valueMult: 14, glow: true },
+  { key: 'legendary', label: 'Legendary', weight: 300, color: '#ffb100', valueMult: 45, glow: true },
+  { key: 'mythic', label: 'Mythic', weight: 80, color: '#ff4d6d', valueMult: 140, glow: true },
+  { key: 'impossible', label: 'Impossible', weight: 20, color: '#00e5ff', valueMult: 420, glow: true },
+  { key: 'oneofone', label: 'One-of-One', weight: 2, color: '#ffffff', valueMult: 2200, glow: true },
 ];
 
 export const RARITY_ORDER = RARITIES.map(r => r.key);
