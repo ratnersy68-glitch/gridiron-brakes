@@ -316,6 +316,41 @@
 }
 .summary-card { position: relative; }
 
+/* ---------- Case break (bulk box purchase) ---------- */
+.case-stack {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  max-width: 760px;
+  perspective: 1000px;
+}
+.case-stack .case-box {
+  animation: case-drop 0.45s cubic-bezier(.2, .9, .3, 1.2) backwards;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5));
+}
+@keyframes case-drop {
+  from { transform: translateY(-40px) rotateX(-25deg); opacity: 0; }
+  to { transform: translateY(0) rotateX(0); opacity: 1; }
+}
+.case-stack.ripping { animation: case-shake 0.45s ease; }
+@keyframes case-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-9px) rotate(-1deg); }
+  50% { transform: translateX(7px) rotate(1deg); }
+  75% { transform: translateX(-4px); }
+}
+.case-results { width: 100%; }
+.case-stats { margin-bottom: 10px; }
+/* Eight single-column stat blocks make an absurdly tall phone screen, so
+   keep the case P&L two-up on narrow viewports. */
+@media (max-width: 768px) {
+  .case-stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .case-stats .stat-block { padding: 10px 12px; }
+  .case-stats .stat-block .value { font-size: 15px; }
+  .case-stack .case-box svg { width: 104px; height: auto; }
+}
+
 /* ---------- Box card art in shop ---------- */
 .product-box-art { display: flex; justify-content: center; }
 .product-box-art svg { max-width: 100%; height: auto; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.4)); }

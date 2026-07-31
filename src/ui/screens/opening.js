@@ -2,6 +2,7 @@ import { cardTileEl } from '../cardView.js';
 import { burstConfetti } from '../confetti.js';
 import { sfx, revealSoundForRarity } from '../../systems/sound.js';
 import { boxArtEl, stylePackEl } from '../boxArt.js';
+import { money } from '../../utils/format.js';
 
 // Reveal escalation tiers:
 //   common/uncommon  quick flip
@@ -12,6 +13,124 @@ import { boxArtEl, stylePackEl } from '../boxArt.js';
 //   oneofone         room darkens, gold beams, fireworks, card rotates in 3D
 const BIG_HIT_RARITIES = new Set(['legendary', 'mythic', 'impossible', 'oneofone']);
 const DRAMATIC_RARITIES = new Set(['rare', 'epic', 'legendary', 'mythic', 'impossible', 'oneofone']);
+
+// A case can contain tens of thousands of cards; rendering a tile for each
+// would lock the browser. Every card is still filed into the binder — only
+// the on-screen showcase is capped, to the best hits.
+const CASE_SHOWCASE_LIMIT = 48;
+
+function renderCaseBreak(container, game, box, packs, qty, totalCost) {
+  const cards = packs.flat();
+
+  const wrap = document.createElement('div');
+  wrap.className = 'panel';
+  wrap.innerHTML = `<div class="panel-title">Case Break: ${qty} × ${box.name} <span class="sub">${box.brand}</span></div>`;
+
+  const stage = document.createElement('div');
+  stage.className = 'opening-stage';
+  wrap.appendChild(stage);
+  container.appendChild(wrap);
+
+  const caseStack = document.createElement('div');
+  caseStack.className = 'case-stack';
+  const shown = Math.min(qty, 12);
+  for (let i = 0; i < shown; i++) {
+    const b = boxArtEl(box, { width: 150, height: 113 });
+    b.className = 'case-box';
+    b.style.setProperty('--i', String(i));
+    b.style.animationDelay = `${i * 0.045}s`;
+    caseStack.appendChild(b);
+  }
+  stage.appendChild(caseStack);
+
+  const summaryLine = document.createElement('div');
+  summaryLine.className = 'muted';
+  summaryLine.textContent = `${qty} boxes • ${packs.length} packs • ${cards.length.toLocaleString()} cards • paid ${money(totalCost)}`;
+  stage.appendChild(summaryLine);
+
+  const ripBtn = document.createElement('button');
+  ripBtn.className = 'btn btn-gold';
+  ripBtn.textContent = `⚡ Rip All ${qty} Boxes`;
+  stage.appendChild(ripBtn);
+
+  const results = document.createElement('div');
+  results.className = 'case-results';
+  stage.appendChild(results);
+
+  ripBtn.addEventListener('click', () => {
+    ripBtn.disabled = true;
+    ripBtn.textContent = 'Ripping…';
+    caseStack.classList.add('ripping');
+    sfx.packRip();
+
+    // Yield once so the button state paints before the heavy work runs.
+    setTimeout(() => {
+      for (let i = 0; i < packs.length; i++) game.recordPackOpened();
+      const { duplicates, totalValue, best } = game.collectCardsBulk(cards);
+
+      caseStack.remove();
+      ripBtn.remove();
+      summaryLine.remove();
+
+      const bestValue = best ? game.cardValue(best) : 0;
+      const stats = document.createElement('div');
+      stats.className = 'grid grid-cols-4 case-stats';
+      const block = (label, value, accent) =>
+        `<div class="stat-block"><div class="label">${label}</div><div class="value"${accent ? ` style="color:${accent}"` : ''}>${value}</div></div>`;
+      stats.innerHTML =
+        block('Cards Pulled', cards.length.toLocaleString()) +
+        block('Total Value', money(totalValue), totalValue >= totalCost ? 'var(--success)' : 'var(--danger)') +
+        block('Paid', money(totalCost)) +
+        block('Net', `${totalValue - totalCost >= 0 ? '+' : ''}${money(totalValue - totalCost)}`,
+          totalValue >= totalCost ? 'var(--success)' : 'var(--danger)') +
+        block('Duplicates', duplicates.toLocaleString()) +
+        block('Best Hit', best ? `${best.playerName}` : '—', 'var(--accent)') +
+        block('Best Value', money(bestValue), 'var(--accent)') +
+        block('Packs Opened', packs.length.toLocaleString());
+      results.appendChild(stats);
+
+      const topCards = [...cards].sort((a, b) => game.cardValue(b) - game.cardValue(a));
+      const showcase = topCards.slice(0, CASE_SHOWCASE_LIMIT);
+
+      const title = document.createElement('div');
+      title.className = 'panel-title mt-16';
+      title.style.fontSize = '13px';
+      title.textContent = `Top ${showcase.length} hits from the case`;
+      results.appendChild(title);
+
+      const grid = document.createElement('div');
+      grid.className = 'card-grid';
+      showcase.forEach((card, i) => {
+        const holder = document.createElement('div');
+        holder.className = 'fade-in';
+        holder.style.animationDelay = `${Math.min(i * 0.02, 0.9)}s`;
+        holder.appendChild(cardTileEl(card, { showValue: true, valueOverride: game.cardValue(card) }));
+        grid.appendChild(holder);
+      });
+      results.appendChild(grid);
+
+      if (cards.length > showcase.length) {
+        const rest = document.createElement('div');
+        rest.className = 'muted mt-8';
+        rest.textContent = `+ ${(cards.length - showcase.length).toLocaleString()} more cards filed into your binder.`;
+        results.appendChild(rest);
+      }
+
+      const bestRarity = topCards[0]?.rarityKey;
+      if (bestRarity && BIG_HIT_RARITIES.has(bestRarity)) {
+        flashScreen();
+        burstConfetti(bestRarity === 'oneofone' ? 180 : 100);
+        if (bestRarity === 'oneofone') sfx.announcer(); else sfx.revealLegendary();
+      }
+
+      const done = document.createElement('button');
+      done.className = 'btn btn-gold mt-16';
+      done.textContent = 'Finish & View Binder';
+      done.addEventListener('click', () => game.setScreen('binder'));
+      results.appendChild(done);
+    }, 40);
+  });
+}
 
 function flashScreen() {
   const flash = document.createElement('div');
@@ -45,8 +164,12 @@ function oneOfOneCeremony(cardEl) {
 }
 
 export function renderOpening(container, game) {
-  const { box, packs } = game.screenParams;
+  const { box, packs, qty = 1, totalCost = 0 } = game.screenParams;
   if (!box || !packs) { game.setScreen('boxes'); return; }
+
+  // A multi-box purchase is presented as one case break rather than N
+  // separate rituals — nobody wants to tear 50 wrappers by hand.
+  if (qty > 1) { renderCaseBreak(container, game, box, packs, qty, totalCost); return; }
 
   let openedCount = 0;
   const totalPacks = packs.length;
