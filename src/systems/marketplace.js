@@ -36,7 +36,7 @@ export function refreshDailyOffers(state, rng = Math.random, count = 6) {
   const offers = [];
   for (let i = 0; i < count; i++) {
     const ask = randomAsk(rng);
-    const premium = 1.05 + rng() * 0.3; // 105%-135% of market value
+    const premium = 1.15 + rng() * 0.45; // 115%-160% of market value
     offers.push({
       id: `offer_${state.day}_${i}`,
       buyer: pick(rng, COLLECTOR_HANDLES),

@@ -25,10 +25,30 @@ function rollCard(rng, box, gameDay, forcedCategory) {
   return makeCard({ rng, rarityKey, category, typeDef: def, player, boxKey: box.key, gameDay });
 }
 
-// A single loose card, junk-heavy — what walk-in customers bring to the
-// shop counter. No box odds modifier: raw baseline rarity weights.
+// A single loose card at raw baseline rarity weights (junk-heavy).
 export function rollLooseCard(rng = Math.random, gameDay = 0) {
-  const entries = RARITIES.map(r => ({ value: r.key, weight: r.weight }));
+  return rollCardWithWeights(RARITIES.map(r => ({ value: r.key, weight: r.weight })), rng, gameDay);
+}
+
+// Walk-in customers at the shop counter bring the good stuff — people dig
+// out their prized cards when they finally decide to sell, so this pool is
+// weighted hard toward rares, autos, numbered parallels and better. `heat`
+// scales that skew further (higher career stages attract bigger sellers).
+export function rollShopCard(rng = Math.random, gameDay = 0, heat = 1) {
+  const weights = [
+    { value: 'common', weight: 300 / heat },
+    { value: 'uncommon', weight: 800 / heat },
+    { value: 'rare', weight: 2600 },
+    { value: 'epic', weight: 2200 * heat },
+    { value: 'legendary', weight: 1400 * heat },
+    { value: 'mythic', weight: 500 * heat },
+    { value: 'impossible', weight: 160 * heat },
+    { value: 'oneofone', weight: 20 * heat },
+  ];
+  return rollCardWithWeights(weights, rng, gameDay);
+}
+
+function rollCardWithWeights(entries, rng, gameDay) {
   const rarityKey = pickWeighted(rng, entries);
   const candidates = poolsForRarity(rarityKey);
   const { category, def } = pick(rng, candidates.length ? candidates : poolsForRarity('common'));

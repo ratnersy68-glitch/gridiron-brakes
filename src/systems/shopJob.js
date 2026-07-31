@@ -7,7 +7,7 @@
 import { addCash } from './state.js';
 import { bus } from './eventBus.js';
 import { randInt, pick, pickWeighted } from '../utils/rng.js';
-import { rollLooseCard } from './packOpening.js';
+import { rollShopCard } from './packOpening.js';
 import { cardMarketValue } from './economy.js';
 
 // Physical condition of the cards a customer brings in. Multiplies the lot's
@@ -30,9 +30,9 @@ export function conditionOf(key) {
 
 export const CAREER_STAGES = [
   { stage: 0, title: 'Unemployed' },
-  { stage: 1, title: 'Shop Employee', wage: 60, commission: 0.2, promoteAt: { shiftsWorked: 10 } },
-  { stage: 2, title: 'Shift Lead', wage: 90, commission: 0.3, promoteAt: { shiftsWorked: 25 } },
-  { stage: 3, title: 'Store Manager', wage: 130, commission: 0.45, promoteAt: { buyoutCash: 50000 } },
+  { stage: 1, title: 'Shop Employee', wage: 95, commission: 0.32, promoteAt: { shiftsWorked: 8 } },
+  { stage: 2, title: 'Shift Lead', wage: 150, commission: 0.45, promoteAt: { shiftsWorked: 20 } },
+  { stage: 3, title: 'Store Manager', wage: 240, commission: 0.6, promoteAt: { buyoutCash: 35000 } },
   { stage: 4, title: 'Shop Owner', wage: 0, commission: 1.0, promoteAt: { netWorth: 2000000, upgradesMaxed: true } },
   { stage: 5, title: 'Owner of the Largest Shop in the Game', wage: 0, commission: 1.0 },
 ];
@@ -83,11 +83,12 @@ export function promote(state) {
 }
 
 function randomCustomer(state, rng) {
-  // Higher career stages attract customers with bigger (and better) lots.
-  const cardCount = randInt(rng, 1, 2 + Math.min(3, state.shop.careerStage));
+  // Higher career stages attract customers with bigger, hotter lots.
+  const cardCount = randInt(rng, 2, 3 + Math.min(3, state.shop.careerStage));
+  const heat = 1 + state.shop.careerStage * 0.35;
   const cards = [];
   for (let i = 0; i < cardCount; i++) {
-    const card = rollLooseCard(rng, state.day);
+    const card = rollShopCard(rng, state.day, heat);
     card.condition = pickWeighted(rng, CONDITION_WEIGHTS);
     cards.push(card);
   }
