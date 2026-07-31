@@ -1,5 +1,6 @@
 import { money, moneyExact } from '../utils/format.js';
 import { sfx } from '../systems/sound.js';
+import { cardTileEl, cardBackEl } from './cardView.js';
 
 function sparklineSvg(points, width = 440, height = 90) {
   if (!points.length) return '';
@@ -30,25 +31,67 @@ export function openCardModal(game, card, { context = 'binder' } = {}) {
   modal.className = 'modal slide-up';
   overlay.appendChild(modal);
 
+  let flipped = false;
+
   function close() { overlay.remove(); }
+
+  function buildPreview() {
+    const wrap = document.createElement('div');
+    wrap.className = 'modal-flip-wrap';
+    const inner = document.createElement('div');
+    inner.className = 'modal-flip-inner' + (flipped ? ' is-flipped' : '');
+
+    const front = document.createElement('div');
+    front.className = 'modal-flip-face front';
+    front.appendChild(cardTileEl(card, { showValue: false }));
+
+    const back = document.createElement('div');
+    back.className = 'modal-flip-face back';
+    back.appendChild(cardBackEl(card));
+
+    inner.appendChild(front);
+    inner.appendChild(back);
+    wrap.appendChild(inner);
+
+    wrap.addEventListener('click', () => { flipped = !flipped; sfx.cardFlip(); inner.classList.toggle('is-flipped', flipped); });
+    return wrap;
+  }
 
   function renderBody() {
     const history = game.priceHistory(card.playerId);
     const value = game.cardValue(card);
-    modal.innerHTML = `
-      <h3>${card.playerName} <span class="tag" style="color:${card.rarityColor}">${card.rarityLabel}</span></h3>
+    modal.innerHTML = '';
+
+    const previewRow = document.createElement('div');
+    previewRow.className = 'modal-preview-row';
+    previewRow.appendChild(buildPreview());
+    const hint = document.createElement('div');
+    hint.className = 'muted';
+    hint.style.textAlign = 'center';
+    hint.style.fontSize = '11px';
+    hint.textContent = 'Tap the card to flip it over';
+    modal.appendChild(previewRow);
+    modal.appendChild(hint);
+
+    const header = document.createElement('div');
+    header.className = 'mt-16';
+    header.innerHTML = `
+      <h3 style="margin:0;">${card.playerName} <span class="tag" style="color:${card.rarityColor}">${card.rarityLabel}</span></h3>
       <div class="muted">${card.teamName} • ${card.position} • ${card.typeLabel}${card.serial ? ` #${card.serial}/${card.printRun}` : ''}${card.isRookie ? ' • Rookie Card' : ''}</div>
       <div class="mt-16" style="font-size:26px;font-weight:800;color:var(--accent)">${moneyExact(value)}</div>
       <div class="muted" style="font-size:12px">Base value ${moneyExact(card.baseValue)} • Market index applied live</div>
-      <div class="panel mt-16" style="padding:12px;">
-        <div class="panel-title" style="margin-bottom:6px;font-size:13px;">Price History</div>
-        ${sparklineSvg(history)}
-      </div>
-      <div class="flex flex-wrap gap-8 mt-16" id="modal-actions"></div>
-      <button class="btn btn-ghost btn-block mt-16" id="modal-close">Close</button>
     `;
+    modal.appendChild(header);
 
-    const actions = modal.querySelector('#modal-actions');
+    const historyPanel = document.createElement('div');
+    historyPanel.className = 'panel mt-16';
+    historyPanel.style.padding = '12px';
+    historyPanel.innerHTML = `<div class="panel-title" style="margin-bottom:6px;font-size:13px;">Price History</div>${sparklineSvg(history)}`;
+    modal.appendChild(historyPanel);
+
+    const actions = document.createElement('div');
+    actions.className = 'flex flex-wrap gap-8 mt-16';
+    modal.appendChild(actions);
 
     if (context === 'binder') {
       const sellBtn = document.createElement('button');
@@ -85,7 +128,11 @@ export function openCardModal(game, card, { context = 'binder' } = {}) {
     lockBtn.addEventListener('click', () => { game.toggleLock(card.uid); card.locked = !card.locked; renderBody(); });
     actions.appendChild(lockBtn);
 
-    modal.querySelector('#modal-close').addEventListener('click', close);
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'btn btn-ghost btn-block mt-16';
+    closeBtn.textContent = 'Close';
+    closeBtn.addEventListener('click', close);
+    modal.appendChild(closeBtn);
   }
 
   renderBody();
