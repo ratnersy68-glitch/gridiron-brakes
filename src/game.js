@@ -155,19 +155,31 @@ export class Game {
   }
 
   // --- Boxes ---------------------------------------------------------------
-  buyBox(boxKey) {
+  /**
+   * Buys and opens `qty` copies of a product in one transaction. Packs from
+   * every box are returned in a single flat list — a case break is presented
+   * as one combined rip rather than N separate rituals.
+   */
+  buyBoxes(boxKey, qty = 1) {
     const box = getBox(boxKey);
     if (!box) return { ok: false };
-    if (!StateSys.spendCash(this.state, box.price)) {
-      showToast({ text: 'Not enough cash for that box.', kind: 'danger' });
+    const count = Math.max(1, Math.floor(qty));
+    const totalCost = box.price * count;
+    if (!StateSys.spendCash(this.state, totalCost)) {
+      showToast({ text: 'Not enough cash for that.', kind: 'danger' });
       return { ok: false, reason: 'insufficient-funds' };
     }
-    this.state.stats.totalBoxesOpened += 1;
-    this.state.stats.boxesByType[boxKey] = (this.state.stats.boxesByType[boxKey] || 0) + 1;
-    const packs = openBox(box, this.state.day);
+    this.state.stats.totalBoxesOpened += count;
+    this.state.stats.boxesByType[boxKey] = (this.state.stats.boxesByType[boxKey] || 0) + count;
+    const packs = [];
+    for (let i = 0; i < count; i++) packs.push(...openBox(box, this.state.day));
     this.recalcAll();
     this.notify();
-    return { ok: true, box, packs };
+    return { ok: true, box, packs, qty: count, totalCost };
+  }
+
+  buyBox(boxKey) {
+    return this.buyBoxes(boxKey, 1);
   }
 
   recordPackOpened() {
@@ -178,6 +190,30 @@ export class Game {
     const result = StateSys.recordCardCollected(this.state, card);
     this.recalcAll();
     return result;
+  }
+
+  /**
+   * Files a whole case at once. Recalculating per card is O(n) over the
+   * checklist each time, which is far too slow for thousands of cards, so
+   * stats are recomputed a single time at the end.
+   */
+  collectCardsBulk(cards) {
+    let duplicates = 0;
+    let totalValue = 0;
+    let best = null;
+    for (const card of cards) {
+      const { isDuplicate } = StateSys.recordCardCollected(this.state, card);
+      if (isDuplicate) duplicates += 1;
+      const v = this.cardValue(card);
+      totalValue += v;
+      if (!best || v > this.cardValue(best)) best = card;
+    }
+    this.recalcAll();
+    this.save();
+    // Deliberately no notify() — the opening screen owns its own DOM while a
+    // break is on screen, and a re-render here would wipe the results back to
+    // the unopened case.
+    return { duplicates, totalValue, best, count: cards.length };
   }
 
   finishOpening() {
