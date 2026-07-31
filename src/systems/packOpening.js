@@ -25,6 +25,17 @@ function rollCard(rng, box, gameDay, forcedCategory) {
   return makeCard({ rng, rarityKey, category, typeDef: def, player, boxKey: box.key, gameDay });
 }
 
+// A single loose card, junk-heavy — what walk-in customers bring to the
+// shop counter. No box odds modifier: raw baseline rarity weights.
+export function rollLooseCard(rng = Math.random, gameDay = 0) {
+  const entries = RARITIES.map(r => ({ value: r.key, weight: r.weight }));
+  const rarityKey = pickWeighted(rng, entries);
+  const candidates = poolsForRarity(rarityKey);
+  const { category, def } = pick(rng, candidates.length ? candidates : poolsForRarity('common'));
+  const player = pickPlayerForRarity(rng, rarityKey);
+  return makeCard({ rng, rarityKey, category, typeDef: def, player, boxKey: null, source: 'shop', gameDay });
+}
+
 /**
  * @returns {Array<Array<Card>>} packs, each an array of cards
  */
