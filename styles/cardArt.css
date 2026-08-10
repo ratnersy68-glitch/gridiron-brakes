@@ -1,0 +1,564 @@
+/* =========================================================================
+   Card front/back art system: portrait area, rating/rookie badges, foil
+   sweep, chrome edges, and per-set background/border/foil templates.
+   ========================================================================= */
+
+.card-tile {
+  /* overrides the flex column from main.css's placeholder-era layout */
+  display: block;
+  padding: 0;
+}
+.card-tile .card-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.card-tile .card-portrait {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+}
+.card-tile .card-portrait svg { width: 100%; height: 100%; display: block; }
+.card-tile .card-info {
+  position: relative;
+  flex: 0 0 auto;
+  padding: 6px 8px 8px;
+  background: linear-gradient(180deg, rgba(8,10,16,0.15), rgba(6,8,13,0.92) 40%);
+}
+.card-tile .team-logo-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 22px;
+  height: 22px;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+  z-index: 3;
+}
+.card-tile .rating-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  min-width: 26px;
+  height: 22px;
+  padding: 0 4px;
+  border-radius: 6px;
+  background: rgba(8,10,16,0.75);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+}
+.card-tile .rookie-badge {
+  position: absolute;
+  top: 30px;
+  right: 6px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  background: linear-gradient(135deg, #ffd76a, #c9891f);
+  color: #241a03;
+  padding: 2px 5px;
+  border-radius: 5px;
+  z-index: 3;
+}
+.card-tile .position-badge { position: relative; z-index: 3; }
+.card-tile .type-value-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 2px;
+}
+.card-tile .type-value-row .type-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.card-tile .serial-badge {
+  position: relative;
+  z-index: 3;
+  font-size: 9.5px;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* foil shine sweep, present on every card, intensity via template class */
+.card-tile .foil-sweep {
+  position: absolute;
+  inset: -20% -60%;
+  background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.5) 48%, rgba(255,255,255,0.08) 52%, transparent 60%);
+  mix-blend-mode: overlay;
+  transform: translateX(-60%);
+  animation: foil-sweep 3.6s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+@keyframes foil-sweep {
+  0% { transform: translateX(-70%) rotate(0.001deg); }
+  45%, 100% { transform: translateX(70%) rotate(0.001deg); }
+}
+@media (prefers-reduced-motion: reduce) { .card-tile .foil-sweep { animation: none; opacity: 0.15; } }
+
+/* chrome edge + depth */
+.card-tile { box-shadow: var(--shadow-1), inset 0 0 0 1px rgba(255,255,255,0.04); }
+.card-tile:hover { box-shadow: var(--shadow-2), inset 0 0 0 1px rgba(255,255,255,0.08); }
+
+/* ---------------- border templates ---------------- */
+.tmpl-border-thin { border-width: 1px; }
+.tmpl-border-thick { border-width: 4px; }
+.tmpl-border-diag { border-width: 3px; border-image: repeating-linear-gradient(45deg, currentColor 0 6px, transparent 6px 12px) 1; }
+.tmpl-border-chrome { border-width: 3px; border-color: #cfd8e3; }
+.tmpl-border-gold { border-width: 4px; border-color: #e8c766; }
+.tmpl-border-vault { border-width: 5px; border-color: #d9b74a; box-shadow: inset 0 0 0 2px #6b551c; }
+.tmpl-border-marble { border-width: 3px; border-color: #cbb98f; }
+.tmpl-border-bronze { border-width: 4px; border-color: #a9713f; }
+.tmpl-border-royal { border-width: 4px; border-color: #caa14a; }
+.tmpl-border-cosmic { border-width: 3px; border-color: #7d6fe0; }
+.tmpl-border-neon { border-width: 2px; border-color: #37f0d8; }
+.tmpl-border-ice { border-width: 3px; border-color: #6fb8e0; }
+.tmpl-border-flame { border-width: 3px; border-color: #ff7a3d; }
+
+/* ---------------- background templates ---------------- */
+.tmpl-bg-clean .card-portrait { background: linear-gradient(160deg, var(--bg-3), var(--bg-1)); }
+.tmpl-bg-dots .card-portrait {
+  background: radial-gradient(circle at center, #263043 0 1.4px, transparent 1.5px) 0 0/10px 10px, linear-gradient(160deg, var(--bg-3), var(--bg-1));
+}
+.tmpl-bg-shard .card-portrait {
+  background:
+    linear-gradient(115deg, rgba(255,255,255,0.10) 0 8%, transparent 9% 20%, rgba(255,255,255,0.07) 21% 30%, transparent 31% 55%, rgba(255,255,255,0.09) 56% 62%, transparent 63% 100%),
+    linear-gradient(160deg, #2c3550, #12172a);
+}
+.tmpl-bg-prismo .card-portrait {
+  background:
+    repeating-linear-gradient(100deg, #ff5f7a 0 4%, #ffd35f 8%, #63f0a0 12%, #5fb3ff 16%, #b16bff 20%, #ff5f7a 24%),
+    linear-gradient(160deg, #10131c, #05060a);
+  background-blend-mode: color-dodge, normal;
+  opacity: 1;
+}
+.tmpl-bg-diag .card-portrait {
+  background: repeating-linear-gradient(135deg, #23283a 0 14px, #171b28 14px 28px);
+}
+.tmpl-bg-stadium .card-portrait {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.35) 0%, transparent 55%),
+    radial-gradient(ellipse at 20% 100%, rgba(75,146,219,0.25), transparent 60%),
+    linear-gradient(180deg, #0c1220, #05070c);
+}
+.tmpl-bg-marble .card-portrait {
+  background:
+    repeating-linear-gradient(100deg, rgba(233,199,102,0.10) 0 2px, transparent 2px 22px),
+    repeating-linear-gradient(20deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 30px),
+    linear-gradient(160deg, #1c1c22, #0a0a0c);
+}
+.tmpl-bg-marble-purple .card-portrait {
+  background:
+    repeating-linear-gradient(100deg, rgba(233,199,102,0.10) 0 2px, transparent 2px 22px),
+    linear-gradient(160deg, #2a1f42, #0c0a16);
+}
+.tmpl-bg-vault .card-portrait {
+  background:
+    repeating-linear-gradient(0deg, rgba(217,183,74,0.06) 0 2px, transparent 2px 16px),
+    repeating-linear-gradient(90deg, rgba(217,183,74,0.06) 0 2px, transparent 2px 16px),
+    radial-gradient(circle at 50% 30%, rgba(217,183,74,0.25), transparent 60%),
+    linear-gradient(180deg, #14120a, #050403);
+}
+.tmpl-bg-bronze .card-portrait {
+  background: radial-gradient(circle at 50% 20%, rgba(169,113,63,0.4), transparent 60%), linear-gradient(180deg, #2a1d12, #0c0805);
+}
+.tmpl-bg-confetti .card-portrait {
+  background:
+    radial-gradient(circle at 15% 20%, #ffd35f 0 3px, transparent 4px),
+    radial-gradient(circle at 70% 15%, #5fb3ff 0 3px, transparent 4px),
+    radial-gradient(circle at 40% 60%, #ff5f7a 0 3px, transparent 4px),
+    radial-gradient(circle at 85% 70%, #63f0a0 0 3px, transparent 4px),
+    radial-gradient(circle at 25% 85%, #b16bff 0 3px, transparent 4px),
+    linear-gradient(180deg, #1a1408, #060502);
+  background-size: 60px 60px, 70px 70px, 50px 50px, 65px 65px, 55px 55px, 100% 100%;
+}
+.tmpl-bg-royal .card-portrait {
+  background: radial-gradient(ellipse at 50% 0%, rgba(202,161,74,0.35), transparent 60%), linear-gradient(180deg, #3a0d14, #0c0305);
+}
+.tmpl-bg-cosmic .card-portrait {
+  background:
+    radial-gradient(circle at 20% 20%, #fff 0 1px, transparent 1.5px) 0 0/40px 40px,
+    radial-gradient(circle at 60% 70%, #fff 0 1px, transparent 1.5px) 10px 10px/70px 70px,
+    radial-gradient(ellipse at 50% 40%, rgba(125,111,224,0.4), transparent 65%),
+    linear-gradient(180deg, #120a2a, #050310);
+}
+.tmpl-bg-optix .card-portrait {
+  background:
+    repeating-linear-gradient(120deg, #cfe6ff0d 0 3px, transparent 3px 18px),
+    linear-gradient(160deg, #3a4657, #0d1117);
+}
+.tmpl-bg-holo .card-portrait {
+  background: conic-gradient(from 0deg at 50% 50%, #ff5f7a, #ffd35f, #63f0a0, #5fb3ff, #b16bff, #ff5f7a);
+  background-blend-mode: color-dodge;
+}
+.tmpl-bg-holo .card-portrait::after {
+  content: ''; position: absolute; inset: 0; background: linear-gradient(160deg, rgba(10,12,18,0.75), rgba(10,12,18,0.92));
+}
+.tmpl-bg-laser .card-portrait {
+  background: repeating-conic-gradient(from 0deg, rgba(255,255,255,0.08) 0deg 4deg, transparent 4deg 12deg), linear-gradient(160deg, #241a3a, #0a0714);
+}
+.tmpl-bg-neon .card-portrait {
+  background:
+    linear-gradient(180deg, transparent 92%, #37f0d8 92% 94%, transparent 94%),
+    linear-gradient(90deg, transparent 92%, #ff2fd0 92% 94%, transparent 94%),
+    linear-gradient(160deg, #10061a, #050208);
+  background-size: 100% 18px, 18px 100%, 100% 100%;
+}
+.tmpl-bg-blackice .card-portrait {
+  background:
+    repeating-linear-gradient(70deg, rgba(111,184,224,0.10) 0 2px, transparent 2px 24px),
+    linear-gradient(160deg, #0d1117, #000000);
+}
+.tmpl-bg-splash .card-portrait {
+  background:
+    radial-gradient(circle at 30% 30%, #ff5f7a55, transparent 40%),
+    radial-gradient(circle at 70% 60%, #5fb3ff55, transparent 40%),
+    radial-gradient(circle at 50% 85%, #63f0a055, transparent 40%),
+    linear-gradient(160deg, #181c26, #0a0c11);
+}
+.tmpl-bg-flame .card-portrait {
+  background:
+    radial-gradient(ellipse at 50% 100%, #ff7a3d 0%, #d1361b 30%, transparent 65%),
+    linear-gradient(180deg, #1a0a04, #0a0402);
+}
+.tmpl-bg-storm .card-portrait {
+  background:
+    radial-gradient(ellipse at 30% 10%, rgba(255,255,255,0.25), transparent 40%),
+    linear-gradient(180deg, #1a2740, #05070c);
+}
+.tmpl-bg-raylight .card-portrait {
+  background:
+    repeating-conic-gradient(from 0deg at 50% 0%, rgba(255,220,140,0.28) 0deg 3deg, transparent 3deg 14deg),
+    linear-gradient(180deg, #241a06, #08050a);
+}
+
+/* ---------------- foil intensity ---------------- */
+.tmpl-foil-none .foil-sweep { opacity: 0.15; }
+.tmpl-foil-cool .foil-sweep { opacity: 0.5; }
+.tmpl-foil-warm .foil-sweep { opacity: 0.5; background: linear-gradient(115deg, transparent 40%, rgba(255,210,150,0.55) 48%, rgba(255,210,150,0.1) 52%, transparent 60%); }
+.tmpl-foil-gold .foil-sweep { opacity: 0.65; background: linear-gradient(115deg, transparent 40%, rgba(255,225,150,0.7) 48%, rgba(255,225,150,0.15) 52%, transparent 60%); }
+.tmpl-foil-chrome .foil-sweep { opacity: 0.8; }
+.tmpl-foil-mirror .foil-sweep { opacity: 1; animation-duration: 2.2s; }
+.tmpl-foil-rainbow .foil-sweep {
+  opacity: 0.85;
+  background: linear-gradient(115deg, transparent 35%, #ff5f7a55 42%, #ffd35f55 46%, #63f0a055 50%, #5fb3ff55 54%, #b16bff55 58%, transparent 65%);
+}
+
+/* =========================================================================
+   Card back
+   ========================================================================= */
+.card-back-design {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  color: #e8ecf3;
+  font-size: 10.5px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.card-back-design .back-logo { display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 11px; }
+.card-back-design .back-logo svg { width: 20px; height: 20px; }
+.card-back-design .back-bio { margin-top: 8px; font-size: 9.5px; color: #c3c9d4; line-height: 1.35; flex: 1 1 auto; overflow: hidden; }
+.card-back-design .back-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 8px; font-size: 9px; margin-top: 6px; }
+.card-back-design .back-stats .stat-row { display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.12); }
+.card-back-design .back-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; font-size: 9px; color: #9aa3b2; }
+.card-back-design .qr-deco { width: 26px; height: 26px; image-rendering: pixelated; opacity: 0.85; }
+
+/* =========================================================================
+   Reveal card gets a real flip with a back face rendered
+   ========================================================================= */
+.reveal-card .flip-face.back .card-tile { position: absolute; inset: 0; }
+
+/* =========================================================================
+   The binder book: leather cover, ringed 9-pocket sleeve pages, and cards
+   that slide up out of the plastic when tapped.
+   ========================================================================= */
+.binder-book { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 14px; }
+
+.binder-cover {
+  width: min(520px, 92%);
+  aspect-ratio: 4 / 3;
+  border-radius: 10px 16px 16px 10px;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.08), transparent 55%),
+    repeating-linear-gradient(35deg, rgba(0,0,0,0.16) 0 3px, transparent 3px 7px),
+    linear-gradient(135deg, #5e2c1c, #38160c 70%);
+  border: 2px solid #241009;
+  border-left-width: 10px;
+  border-left-color: #1c0c06;
+  box-shadow: var(--shadow-2), inset 0 0 40px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transform-origin: left center;
+  transition: transform 0.65s cubic-bezier(.4,.1,.2,1);
+}
+.binder-cover:hover { transform: perspective(1200px) rotateY(-14deg); }
+.binder-cover.opening { transform: perspective(1200px) rotateY(-100deg); opacity: 0.4; }
+.binder-cover-inner { text-align: center; padding: 20px; }
+.binder-cover-title {
+  font-size: clamp(18px, 4vw, 28px);
+  font-weight: 800;
+  color: #e8c766;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.7);
+  border: 2px solid #e8c76644;
+  border-radius: 8px;
+  padding: 10px 22px;
+}
+.binder-cover-sub { margin-top: 10px; color: #caa14a; font-size: 13px; }
+
+.binder-page-nav { display: flex; align-items: center; gap: 14px; }
+
+.binder-page {
+  position: relative;
+  width: min(560px, 96%);
+  border-radius: 8px 14px 14px 8px;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.05), transparent 60%),
+    linear-gradient(160deg, #1c222e, #12161f);
+  border: 1px solid var(--border);
+  border-left: 14px solid #2a1712;
+  box-shadow: var(--shadow-2);
+  padding: 18px 18px 18px 26px;
+}
+.binder-page.flip-out-left { animation: page-flip-left 0.26s ease-in forwards; }
+.binder-page.flip-out-right { animation: page-flip-right 0.26s ease-in forwards; }
+@keyframes page-flip-left {
+  to { transform: perspective(1000px) rotateY(-70deg); opacity: 0; }
+}
+@keyframes page-flip-right {
+  to { transform: perspective(1000px) rotateY(70deg); opacity: 0; }
+}
+
+.binder-rings {
+  position: absolute;
+  left: -9px;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+}
+.binder-rings span {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 3px solid #9aa3b2;
+  background: transparent;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.6), 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.pocket-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.pocket {
+  position: relative;
+  border-radius: 6px;
+  overflow: visible;
+  cursor: pointer;
+}
+.pocket.empty {
+  aspect-ratio: 5 / 7;
+  border: 1.5px dashed rgba(255,255,255,0.12);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.02);
+  cursor: default;
+}
+.pocket .card-tile { width: 100%; }
+.pocket .sleeve {
+  position: absolute;
+  inset: -2px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(255,255,255,0.18);
+  background:
+    linear-gradient(115deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.02) 30%, rgba(255,255,255,0.1) 48%, rgba(255,255,255,0.02) 60%, rgba(255,255,255,0.08) 100%);
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.pocket .sleeve::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 8%; right: 8%; height: 7px;
+  border-radius: 0 0 6px 6px;
+  background: rgba(255,255,255,0.14);
+}
+.pocket.sliding .card-tile {
+  transform: translateY(-26%) scale(1.06);
+  z-index: 20;
+  box-shadow: var(--shadow-2);
+  transition: transform 0.34s cubic-bezier(.2,.8,.3,1.1);
+}
+.pocket.sliding .sleeve { opacity: 0.35; }
+.pocket .card-tile { transition: transform 0.34s cubic-bezier(.2,.8,.3,1.1); }
+.pocket:hover .card-tile { transform: translateY(-4%); }
+.pocket:hover .sleeve { opacity: 0.75; }
+
+@media (max-width: 480px) {
+  .binder-page { padding: 12px 10px 12px 20px; border-left-width: 12px; }
+  .pocket-grid { gap: 7px; }
+}
+
+/* =========================================================================
+   Modal card preview (flip-to-back)
+   ========================================================================= */
+.modal-preview-row { display: flex; justify-content: center; }
+.modal-flip-wrap {
+  width: 200px;
+  max-width: 60vw;
+  aspect-ratio: 5 / 7;
+  perspective: 1200px;
+  cursor: pointer;
+}
+.modal-flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(.2,.9,.3,1.2);
+}
+.modal-flip-inner.is-flipped { transform: rotateY(180deg); }
+.modal-flip-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg-2);
+  box-shadow: var(--shadow-2);
+}
+.modal-flip-face.back { transform: rotateY(180deg); }
+.modal-flip-face .card-tile { position: absolute; inset: 0; aspect-ratio: auto; }
+
+/* =========================================================================
+   The card shop scene: shelf backdrop, counter, walk-in NPC, lot on the
+   counter with condition badges.
+   ========================================================================= */
+.shop-scene {
+  position: relative;
+  margin-top: 14px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, #1a1f2c 0%, #141926 55%, #0e1320 100%);
+  border: 1px solid var(--border-soft);
+  padding: 16px 16px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-height: 380px;
+}
+.shop-shelf {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  width: 100%;
+  padding: 8px 0 12px;
+  border-bottom: 6px solid #2a1712;
+  background: linear-gradient(180deg, transparent 78%, rgba(0,0,0,0.35) 100%);
+  opacity: 0.85;
+}
+.shelf-box { filter: drop-shadow(0 4px 6px rgba(0,0,0,0.45)); }
+.shop-counter {
+  width: 100%;
+  height: 18px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #4a2c1a, #2a1712);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+.npc-side {
+  position: absolute;
+  right: 4%;
+  top: 68px;
+  filter: drop-shadow(0 8px 14px rgba(0,0,0,0.5));
+  pointer-events: none;
+}
+.npc-walk-in { animation: npc-walk-in 0.5s ease backwards; }
+@keyframes npc-walk-in {
+  from { transform: translateX(80px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.npc-walk-out { animation: npc-walk-out 0.35s ease forwards; }
+@keyframes npc-walk-out {
+  to { transform: translateX(110px); opacity: 0; }
+}
+.speech-bubble {
+  position: relative;
+  align-self: flex-start;
+  max-width: 62%;
+  background: #f2f4f8;
+  color: #14181f;
+  border-radius: 14px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  box-shadow: var(--shadow-1);
+}
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  right: -10px;
+  top: 40%;
+  border: 8px solid transparent;
+  border-left-color: #f2f4f8;
+}
+.counter-lot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+.lot-card { position: relative; width: 118px; }
+.condition-badge {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 800;
+  color: #10141d;
+  padding: 2px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.45);
+  z-index: 5;
+}
+.lot-info { font-size: 12.5px; margin-top: 6px; }
+.negotiation-row .btn { min-width: 108px; line-height: 1.25; }
+.shift-summary { text-align: center; padding: 24px 12px; }
+
+@media (max-width: 640px) {
+  .npc-side { position: static; align-self: flex-end; margin-top: -30px; }
+  .npc-side svg { width: 96px; height: 125px; }
+  .speech-bubble { max-width: 100%; align-self: stretch; }
+  .speech-bubble::after { display: none; }
+  .lot-card { width: 104px; }
+}
+
+/* =========================================================================
+   Mobile
+   ========================================================================= */
+@media (max-width: 480px) {
+  .card-tile .rating-badge { font-size: 10px; height: 19px; }
+  .card-tile .rookie-badge { font-size: 8px; top: 27px; }
+}
