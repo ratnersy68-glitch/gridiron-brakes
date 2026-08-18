@@ -1,0 +1,11 @@
+{
+  "name": "prism-rush",
+  "version": "1.0.0",
+  "description": "PRISM RUSH — an original 2D rhythm platformer inspired by reflex-based auto-runners.",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}
