@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Gridiron Brakes: Shootout</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23060910'/%3E%3Cellipse cx='16' cy='16' rx='10' ry='5' fill='%237fd6ff'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="style.css" />
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.module.js"
+  }
+}
+</script>
+</head>
+<body>
+<div id="game-canvas-container"></div>
+
+<div id="ui-root">
+
+  <!-- BOOT / TITLE -->
+  <section class="screen active" id="screen-boot">
+    <div class="boot-wrap">
+      <h1 class="game-title">SHOOTOUT<span>.</span></h1>
+      <p class="subtitle">One shooter. One goalie. Nowhere to hide.</p>
+      <button class="btn btn-primary btn-huge" id="btn-boot-start">Drop the Puck</button>
+      <p class="boot-hint">Mouse / touch to aim &middot; hold to charge &middot; keys 1-4 for shot type</p>
+    </div>
+  </section>
+
+  <!-- MAIN MENU -->
+  <section class="screen" id="screen-main-menu">
+    <header class="topbar">
+      <div class="player-badge">
+        <div class="level-chip" id="hdr-level">Lv 1</div>
+        <div class="rank-name" id="hdr-rank">Rookie</div>
+      </div>
+      <div class="currency">
+        <span class="coin-pill" id="hdr-coins">0</span>
+      </div>
+    </header>
+    <div class="menu-wrap">
+      <h1 class="game-title small">SHOOTOUT<span>.</span></h1>
+      <nav class="menu-list">
+        <button class="menu-btn" data-nav="quickplay">Play</button>
+        <button class="menu-btn" data-nav="screen-mode-select">Shootout</button>
+        <button class="menu-btn" data-nav="screen-challenges">Challenges</button>
+        <button class="menu-btn" data-nav="screen-locker">Locker Room</button>
+        <button class="menu-btn" data-nav="screen-leaderboard">Leaderboard</button>
+        <button class="menu-btn" data-nav="screen-settings">Settings</button>
+      </nav>
+    </div>
+  </section>
+
+  <!-- SHOOTOUT MODE SELECT -->
+  <section class="screen" id="screen-mode-select">
+    <header class="subheader">
+      <button class="btn btn-back" data-nav="screen-main-menu">&larr; Back</button>
+      <h2>Shootout</h2>
+    </header>
+    <div class="panel-columns">
+      <div class="panel">
+        <h3>Mode</h3>
+        <div class="option-list" id="mode-list"></div>
+      </div>
+      <div class="panel">
+        <h3>Difficulty</h3>
+        <div class="option-list" id="difficulty-list"></div>
+        <p class="hint-text" id="difficulty-hint"></p>
+      </div>
+      <div class="panel">
+        <h3>Goalie</h3>
+        <div class="option-list" id="goalie-list"></div>
+        <p class="hint-text" id="goalie-hint"></p>
+      </div>
+      <div class="panel">
+        <h3>Arena</h3>
+        <div class="option-list" id="arena-list"></div>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-huge" id="btn-start-shootout">Start Shootout</button>
+  </section>
+
+  <!-- CHALLENGES -->
+  <section class="screen" id="screen-challenges">
+    <header class="subheader">
+      <button class="btn btn-back" data-nav="screen-main-menu">&larr; Back</button>
+      <h2>Challenges</h2>
+    </header>
+    <div class="challenge-grid" id="challenge-grid"></div>
+  </section>
+
+  <!-- LOCKER ROOM -->
+  <section class="screen" id="screen-locker">
+    <header class="subheader">
+      <button class="btn btn-back" data-nav="screen-main-menu">&larr; Back</button>
+      <h2>Locker Room</h2>
+      <span class="coin-pill" id="locker-coins">0</span>
+    </header>
+    <div class="locker-wrap">
+      <div class="locker-tabs" id="locker-tabs"></div>
+      <div class="locker-grid" id="locker-grid"></div>
+    </div>
+  </section>
+
+  <!-- LEADERBOARD -->
+  <section class="screen" id="screen-leaderboard">
+    <header class="subheader">
+      <button class="btn btn-back" data-nav="screen-main-menu">&larr; Back</button>
+      <h2>Leaderboard</h2>
+    </header>
+    <p class="hint-text center">Personal bests, tracked on this device.</p>
+    <div class="leaderboard-list" id="leaderboard-list"></div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="screen" id="screen-settings">
+    <header class="subheader">
+      <button class="btn btn-back" data-nav="screen-main-menu">&larr; Back</button>
+      <h2>Settings</h2>
+    </header>
+    <div class="settings-list" id="settings-list"></div>
+  </section>
+
+  <!-- HUD (in-game) -->
+  <section class="hud" id="hud">
+    <div class="hud-top">
+      <button class="btn btn-icon" id="btn-hud-quit">&times;</button>
+      <div class="hud-mode-label" id="hud-mode-label">Classic Shootout</div>
+      <div class="hud-score" id="hud-score">0 &ndash; 0</div>
+    </div>
+    <div class="hud-prompt" id="hud-prompt">Click and hold to charge your shot</div>
+    <div class="hud-challenge" id="hud-challenge"></div>
+
+    <div class="shot-type-bar" id="shot-type-bar"></div>
+
+    <div class="power-meter-wrap" id="power-meter-wrap">
+      <div class="power-meter">
+        <div class="power-sweet" id="power-sweet"></div>
+        <div class="power-fill" id="power-fill"></div>
+      </div>
+      <div class="power-label" id="power-label">POWER</div>
+    </div>
+
+    <div class="special-hint" id="special-hint">Hold + drag hard, then SPACE for Michigan &middot; light drag + SPACE for Spin Move</div>
+
+    <div class="opponent-banner" id="opponent-banner">
+      <div class="opponent-banner-text" id="opponent-banner-text">Opponent shoots...</div>
+    </div>
+
+    <div class="result-banner" id="result-banner">
+      <div class="result-banner-text" id="result-banner-text"></div>
+      <div class="result-banner-sub" id="result-banner-sub"></div>
+    </div>
+  </section>
+
+  <!-- TOUCH CONTROLS -->
+  <section class="touch-controls" id="touch-controls">
+    <div class="touch-shot-types" id="touch-shot-types"></div>
+    <button class="touch-special-btn" id="touch-special-btn">SPIN /<br/>MICHIGAN</button>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="screen overlay-screen" id="screen-results">
+    <div class="results-card">
+      <h2 id="results-title">Session Complete</h2>
+      <div class="results-stats" id="results-stats"></div>
+      <div class="results-rewards" id="results-rewards"></div>
+      <div class="results-buttons">
+        <button class="btn btn-primary" id="btn-results-again">Play Again</button>
+        <button class="btn" id="btn-results-menu">Main Menu</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="toast-stack" id="toast-stack"></div>
+</div>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>

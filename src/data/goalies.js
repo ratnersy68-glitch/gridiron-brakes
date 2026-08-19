@@ -1,0 +1,93 @@
+// Goalie personalities. Each biases the AI's decision model in goalieAI.js.
+// bias: preference for high/low/glove/blocker corners (0..1 weights)
+// aggression: how often it commits to a fake / early challenge
+// styleName is shown in the HUD so players can learn to read opponents.
+export const GOALIE_PERSONALITIES = [
+  {
+    id: 'wall',
+    name: 'The Wall',
+    tag: 'Stays square, rarely bites fakes, weak five-hole discipline late.',
+    highBias: 0.9,
+    lowBias: 1.15,
+    gloveBias: 1.0,
+    blockerBias: 1.0,
+    fiveHoleWeakness: 0.35,
+    fakeResistance: 0.35, // reduces fakeBiteChance further
+    aggression: 0.25,
+    boss: false,
+  },
+  {
+    id: 'scrambler',
+    name: 'Scrambler',
+    tag: 'Aggressive, commits early and hard — burn him with a late deke.',
+    highBias: 1.0,
+    lowBias: 0.85,
+    gloveBias: 1.05,
+    blockerBias: 0.95,
+    fiveHoleWeakness: 0.15,
+    fakeResistance: -0.25,
+    aggression: 0.75,
+    boss: false,
+  },
+  {
+    id: 'butterfly',
+    name: 'Butterfly Specialist',
+    tag: 'Drops early to smother low shots — go upstairs.',
+    highBias: 1.25,
+    lowBias: 0.55,
+    gloveBias: 1.0,
+    blockerBias: 1.0,
+    fiveHoleWeakness: -0.2,
+    fakeResistance: 0.1,
+    aggression: 0.4,
+    boss: false,
+  },
+  {
+    id: 'wildcard',
+    name: 'Wildcard',
+    tag: 'No consistent tendency. Unpredictable on every attempt.',
+    highBias: 1.0,
+    lowBias: 1.0,
+    gloveBias: 1.0,
+    blockerBias: 1.0,
+    fiveHoleWeakness: 0.0,
+    fakeResistance: 0.0,
+    aggression: 0.5,
+    randomize: true,
+    boss: false,
+  },
+  {
+    id: 'ironcurtain',
+    name: 'Iron Curtain',
+    tag: 'Boss. Near-perfect positioning — only a perfectly-timed release beats him.',
+    highBias: 1.05,
+    lowBias: 1.05,
+    gloveBias: 1.05,
+    blockerBias: 1.05,
+    fiveHoleWeakness: -0.3,
+    fakeResistance: 0.5,
+    aggression: 0.3,
+    boss: true,
+    readAccuracyBonus: 0.06,
+    perfectWindowMult: 0.75,
+  },
+  {
+    id: 'ghost',
+    name: 'The Ghost',
+    tag: 'Boss. Reads your stick like a book but overcommits on double moves.',
+    highBias: 1.1,
+    lowBias: 1.0,
+    gloveBias: 1.1,
+    blockerBias: 0.95,
+    fiveHoleWeakness: 0.05,
+    fakeResistance: 0.6,
+    aggression: 0.6,
+    boss: true,
+    readAccuracyBonus: 0.08,
+    perfectWindowMult: 0.7,
+  },
+];
+
+export function getGoalie(id) {
+  return GOALIE_PERSONALITIES.find((g) => g.id === id) || GOALIE_PERSONALITIES[0];
+}
