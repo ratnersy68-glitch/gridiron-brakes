@@ -1,0 +1,3398 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Prism Rush</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;600;700&display=swap">
+<style>
+:root {
+  --bg: #05040a;
+  --panel: rgba(18, 14, 34, 0.86);
+  --panel-border: rgba(120, 90, 255, 0.35);
+  --accent: #37f0ff;
+  --accent2: #ff37a4;
+  --text: #eef0ff;
+  --text-dim: #9a95c2;
+  --gold: #ffd23b;
+  font-size: 16px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); overflow: hidden; }
+body { font-family: 'Rajdhani', sans-serif; color: var(--text); }
+h1, h2, h3, .title-font { font-family: 'Orbitron', sans-serif; letter-spacing: 0.03em; }
+
+#app { position: relative; width: 100%; height: 100%; }
+#game-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; background: #05040a; }
+
+#ui-root { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
+#ui-root .interactive { pointer-events: auto; }
+
+.screen {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 50% 20%, rgba(80,40,140,0.35), rgba(4,3,10,0.92) 70%);
+  pointer-events: auto; overflow-y: auto; padding: 24px;
+}
+
+.panel {
+  background: var(--panel); border: 1px solid var(--panel-border); border-radius: 16px;
+  box-shadow: 0 0 40px rgba(120,90,255,0.15), inset 0 0 40px rgba(80,40,140,0.08);
+  padding: 24px; backdrop-filter: blur(6px);
+}
+
+.game-title {
+  font-size: clamp(2.4rem, 6vw, 4.2rem); font-weight: 900; margin: 0 0 6px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  text-shadow: 0 0 40px rgba(55,240,255,0.35);
+}
+.subtitle { color: var(--text-dim); margin-bottom: 28px; letter-spacing: 0.2em; text-transform: uppercase; font-size: 0.85rem; }
+
+.menu-list { display: flex; flex-direction: column; gap: 10px; width: min(360px, 86vw); }
+
+.btn {
+  font-family: 'Orbitron', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em;
+  background: linear-gradient(135deg, rgba(55,240,255,0.14), rgba(255,55,164,0.1));
+  border: 1px solid var(--panel-border); color: var(--text); border-radius: 10px;
+  padding: 13px 18px; cursor: pointer; text-align: left; transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s;
+}
+.btn:hover { transform: translateX(4px); border-color: var(--accent); box-shadow: 0 0 18px rgba(55,240,255,0.35); }
+.btn:active { transform: scale(0.98); }
+.btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #05040a; font-weight: 700; }
+.btn.secondary { background: rgba(255,255,255,0.04); }
+.btn.small { padding: 8px 12px; font-size: 0.8rem; border-radius: 8px; }
+.btn.danger { border-color: rgba(255,80,80,0.5); }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+.row { display: flex; gap: 10px; align-items: center; }
+.row.between { justify-content: space-between; }
+.row.wrap { flex-wrap: wrap; }
+.grid { display: grid; gap: 12px; }
+
+.topbar { position: absolute; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: 16px 22px; pointer-events: none; }
+.topbar .btn { pointer-events: auto; }
+.currency-badge, .xp-badge { font-family: 'Orbitron', sans-serif; font-size: 0.85rem; background: rgba(0,0,0,0.4); border: 1px solid var(--panel-border); border-radius: 20px; padding: 6px 14px; }
+.currency-badge { color: var(--gold); }
+
+.close-x { position: absolute; top: 16px; right: 16px; }
+
+/* Level select */
+.level-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; width: min(1000px, 92vw); max-height: 62vh; overflow-y: auto; padding: 4px; }
+.level-card { border-radius: 12px; padding: 14px; cursor: pointer; border: 1px solid var(--panel-border); background: rgba(255,255,255,0.03); transition: transform 0.12s, box-shadow 0.12s; }
+.level-card:hover { transform: translateY(-3px); box-shadow: 0 6px 24px rgba(55,240,255,0.2); }
+.level-card .lname { font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
+.level-card .lmeta { font-size: 0.78rem; color: var(--text-dim); display: flex; justify-content: space-between; margin-top: 8px; }
+.stars { color: var(--gold); letter-spacing: 2px; }
+.coin-pips span { opacity: 0.25; }
+.coin-pips span.on { opacity: 1; }
+.progress-bar { height: 5px; border-radius: 4px; background: rgba(255,255,255,0.08); overflow: hidden; margin-top: 8px; }
+.progress-bar > div { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+
+.filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; justify-content: center; }
+.chip { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--panel-border); font-size: 0.78rem; cursor: pointer; background: rgba(255,255,255,0.03); }
+.chip.active { background: var(--accent); color: #05040a; font-weight: 700; }
+
+/* HUD */
+#hud { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+#hud .progress-track { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); width: min(50%, 420px); height: 8px; background: rgba(255,255,255,0.12); border-radius: 6px; overflow: hidden; }
+#hud .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); width: 0%; }
+#hud .attempt-badge { position: absolute; top: 12px; left: 14px; font-family: 'Orbitron'; font-size: 0.75rem; background: rgba(0,0,0,0.4); padding: 5px 10px; border-radius: 8px; }
+#hud .coin-hud { position: absolute; top: 12px; right: 14px; display: flex; gap: 6px; }
+#hud .coin-hud .pip { width: 14px; height: 14px; border-radius: 50%; background: rgba(255,255,255,0.12); }
+#hud .coin-hud .pip.on { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+#hud .practice-badge { position: absolute; top: 40px; left: 50%; transform: translateX(-50%); font-size: 0.7rem; color: var(--accent); letter-spacing: 0.15em; }
+
+.death-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 20; }
+.death-flash.show { animation: flashfx 0.25s ease-out; }
+@keyframes flashfx { from { opacity: 0.55; } to { opacity: 0; } }
+
+.overlay-center { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.overlay-center .panel { pointer-events: auto; text-align: center; }
+
+.small-text { font-size: 0.78rem; color: var(--text-dim); }
+.hint { font-size: 0.8rem; color: var(--text-dim); margin-top: 10px; }
+
+input[type=range] { width: 100%; accent-color: var(--accent); }
+select, input[type=text] { background: rgba(255,255,255,0.06); border: 1px solid var(--panel-border); color: var(--text); border-radius: 6px; padding: 6px 8px; font-family: 'Rajdhani'; }
+label.field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; font-size: 0.85rem; color: var(--text-dim); }
+
+.tabs { display: flex; gap: 6px; margin-bottom: 18px; }
+.tabs .chip { font-size: 0.85rem; }
+
+.cosmetic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; max-height: 50vh; overflow-y: auto; }
+.cosmetic-card { border: 1px solid var(--panel-border); border-radius: 10px; padding: 10px; text-align: center; background: rgba(255,255,255,0.03); }
+.cosmetic-card.equipped { border-color: var(--accent); box-shadow: 0 0 14px rgba(55,240,255,0.3); }
+.swatch { width: 100%; height: 60px; border-radius: 8px; margin-bottom: 8px; }
+
+.ach-list, .stat-list { display: grid; gap: 10px; width: min(640px, 92vw); max-height: 60vh; overflow-y: auto; }
+.ach-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--panel-border); background: rgba(255,255,255,0.03); }
+.ach-item.locked { opacity: 0.45; }
+.stat-row { display: flex; justify-content: space-between; padding: 8px 14px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: rgba(120,90,255,0.4); border-radius: 4px; }
+
+/* Editor */
+#editor-toolbar { position: absolute; top: 0; left: 0; bottom: 0; width: 220px; background: rgba(10,8,20,0.92); border-right: 1px solid var(--panel-border); padding: 14px; overflow-y: auto; pointer-events: auto; z-index: 6; }
+#editor-toolbar .btn { width: 100%; margin-bottom: 6px; }
+#editor-props { position: absolute; top: 0; right: 0; bottom: 0; width: 220px; background: rgba(10,8,20,0.92); border-left: 1px solid var(--panel-border); padding: 14px; overflow-y: auto; pointer-events: auto; z-index: 6; }
+
+.toast { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); background: rgba(10,8,20,0.95); border: 1px solid var(--accent); padding: 10px 18px; border-radius: 10px; font-size: 0.85rem; z-index: 30; pointer-events: none; }
+
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="game-canvas"></canvas>
+  <div id="hud"></div>
+  <div class="death-flash" id="death-flash"></div>
+  <div id="ui-root"></div>
+</div>
+<script>
+
+const __defs = {};
+const __cache = {};
+function __require(id) {
+  if (__cache[id]) return __cache[id];
+  if (!__defs[id]) throw new Error('Module not found: ' + id);
+  __cache[id] = {};
+  const exportsObj = __defs[id](__require);
+  __cache[id] = exportsObj;
+  return exportsObj;
+}
+__defs['achievements/Achievements.js'] = function(__require) {
+const { EventBus } = __require('core/Utils.js');
+const { getLevelsByCategory } = __require('levels/levelList.js');
+
+function categoryCleared(save, cat) {
+  const ids = getLevelsByCategory(cat).map((l) => l.id);
+  return ids.length > 0 && ids.every((id) => save.data.levels[id]?.completed);
+}
+function categoryAny(save, cat) {
+  const ids = getLevelsByCategory(cat).map((l) => l.id);
+  return ids.some((id) => save.data.levels[id]?.completed);
+}
+function totalUnlocks(save) {
+  const d = save.data;
+  return d.unlockedShapes.length + d.unlockedTrails.length + d.unlockedColors.length
+    + d.unlockedDeathEffects.length + d.unlockedIcons.length + d.unlockedBgEffects.length;
+}
+function fullCoinLevelCount(save) {
+  return Object.values(save.data.levels).filter((l) => l.coins.every(Boolean)).length;
+}
+
+const ACHIEVEMENT_LIST = [
+  { id: 'first_clear', name: 'First Clear', desc: 'Complete your first level.', reward: { xp: 30, currency: 20 }, test: (s) => s.stats.levelsCompleted >= 1 },
+  { id: 'ten_levels', name: 'Getting Good', desc: 'Complete 10 levels.', reward: { xp: 60, currency: 40 }, test: (s) => s.stats.levelsCompleted >= 10 },
+  { id: 'twentyfive_levels', name: 'Seasoned Runner', desc: 'Complete 25 levels.', reward: { xp: 100, currency: 70 }, test: (s) => s.stats.levelsCompleted >= 25 },
+  { id: 'all_levels', name: 'Completionist', desc: 'Complete all 50 levels.', reward: { xp: 400, currency: 300 }, test: (s) => s.stats.levelsCompleted >= 50 },
+  { id: 'coins_25', name: 'Coin Collector', desc: 'Collect 25 coins.', reward: { xp: 50, currency: 30 }, test: (s) => s.stats.coinsCollected >= 25 },
+  { id: 'coins_75', name: 'Coin Hoarder', desc: 'Collect 75 coins.', reward: { xp: 90, currency: 60 }, test: (s) => s.stats.coinsCollected >= 75 },
+  { id: 'coins_150', name: 'Coin Master', desc: 'Collect 150 coins in total.', reward: { xp: 150, currency: 110 }, test: (s) => s.stats.coinsCollected >= 150 },
+  { id: 'die_100', name: 'Glutton For Punishment', desc: 'Die 100 times.', reward: { xp: 40, currency: 25 }, test: (s) => s.stats.totalDeaths >= 100 },
+  { id: 'die_500', name: 'Unbreakable Will', desc: 'Die 500 times.', reward: { xp: 120, currency: 90 }, test: (s) => s.stats.totalDeaths >= 500 },
+  { id: 'jumps_1000', name: 'Spring Loaded', desc: 'Jump 1,000 times.', reward: { xp: 60, currency: 35 }, test: (s) => s.stats.totalJumps >= 1000 },
+  { id: 'distance_10k', name: 'Long Haul', desc: 'Travel 10,000 units.', reward: { xp: 60, currency: 35 }, test: (s) => s.stats.totalDistance >= 10000 },
+  { id: 'distance_100k', name: 'Marathoner', desc: 'Travel 100,000 units.', reward: { xp: 150, currency: 100 }, test: (s) => s.stats.totalDistance >= 100000 },
+  { id: 'easy_all', name: 'Easy Does It', desc: 'Complete all Easy levels.', reward: { xp: 80, currency: 50 }, testSave: (s) => categoryCleared(s, 'Easy') },
+  { id: 'normal_all', name: 'Normal Order', desc: 'Complete all Normal levels.', reward: { xp: 100, currency: 70 }, testSave: (s) => categoryCleared(s, 'Normal') },
+  { id: 'hard_all', name: 'Hardened', desc: 'Complete all Hard levels.', reward: { xp: 130, currency: 90 }, testSave: (s) => categoryCleared(s, 'Hard') },
+  { id: 'insane_first', name: 'Insane Debut', desc: 'Complete an Insane level.', reward: { xp: 100, currency: 70 }, testSave: (s) => categoryAny(s, 'Insane') },
+  { id: 'insane_all', name: 'Insanity Cleared', desc: 'Complete all Insane levels.', reward: { xp: 180, currency: 130 }, testSave: (s) => categoryCleared(s, 'Insane') },
+  { id: 'demon_first', name: 'Demon Slayer', desc: 'Complete a Demon level.', reward: { xp: 220, currency: 160 }, testSave: (s) => categoryAny(s, 'Demon') },
+  { id: 'demon_all', name: 'Apex Predator', desc: 'Complete every Demon level.', reward: { xp: 400, currency: 300 }, testSave: (s) => categoryCleared(s, 'Demon') },
+  { id: 'no_death_clear', name: 'Flawless', desc: 'Complete a level without dying once.', reward: { xp: 60, currency: 40 }, event: 'level:complete', onEvent: (p) => p.deaths === 0 && !p.practiceMode },
+  { id: 'all_coins_level', name: 'Perfectionist', desc: 'Collect all 3 coins in a single run.', reward: { xp: 50, currency: 35 }, event: 'level:complete', onEvent: (p) => p.totalCoins > 0 && p.coinsCollected === p.totalCoins },
+  { id: 'all_coins_10', name: 'Coin Purist', desc: 'Fully coin 10 different levels.', reward: { xp: 120, currency: 90 }, testSave: (s) => fullCoinLevelCount(s) >= 10 },
+  { id: 'practice_clear', name: 'Study Session', desc: 'Beat a level in Practice Mode.', reward: { xp: 30, currency: 15 }, event: 'level:complete', onEvent: (p) => p.practiceMode },
+  { id: 'daily_first', name: 'Creature Of Habit', desc: 'Complete your first Daily Challenge.', reward: { xp: 40, currency: 30 }, event: 'daily:complete', onEvent: () => true },
+  { id: 'daily_streak_7', name: 'Weekly Warrior', desc: 'Reach a 7-day Daily Challenge streak.', reward: { xp: 150, currency: 120 }, testSave: (s) => s.dailyChallenge.streak >= 7 },
+  { id: 'shop_first', name: 'New Look', desc: 'Unlock a cosmetic item from the Shop.', reward: { xp: 20, currency: 10 }, testSave: (s) => totalUnlocks(s) > 6 },
+  { id: 'shop_collector', name: 'Style Icon', desc: 'Unlock 15 cosmetic items.', reward: { xp: 100, currency: 0 }, testSave: (s) => totalUnlocks(s) >= 21 },
+  { id: 'level10_reach', name: 'Rising Star', desc: 'Reach player level 10.', reward: { xp: 0, currency: 80 }, testSave: (s) => s.playerLevel >= 10 },
+  { id: 'level25_reach', name: 'Veteran', desc: 'Reach player level 25.', reward: { xp: 0, currency: 200 }, testSave: (s) => s.playerLevel >= 25 },
+  { id: 'editor_first', name: 'Level Designer', desc: 'Save a level in the Editor.', reward: { xp: 50, currency: 40 }, testSave: (s) => s.editorLevels.length >= 1 },
+  { id: 'first_checkpoint', name: 'Safety Net', desc: 'Place a checkpoint in Practice Mode.', reward: { xp: 10, currency: 10 }, event: 'practice:checkpoint-added', onEvent: () => true },
+  { id: 'attempts_100', name: 'Persistent', desc: 'Reach 100 total attempts.', reward: { xp: 40, currency: 25 }, testSave: (s) => s.stats.totalAttempts >= 100 },
+  { id: 'attempts_1000', name: 'Never Give Up', desc: 'Reach 1,000 total attempts.', reward: { xp: 150, currency: 100 }, testSave: (s) => s.stats.totalAttempts >= 1000 },
+];
+
+const RECHECK_EVENTS = [
+  'level:complete', 'level:death', 'level:coin', 'level:jump', 'progression:level-up',
+  'daily:complete', 'practice:checkpoint-added', 'editor:save', 'shop:purchase',
+];
+
+class Achievements {
+  constructor(save) {
+    this.save = save;
+    this._unsubs = [];
+    for (const ev of RECHECK_EVENTS) this._unsubs.push(EventBus.on(ev, () => this.recheckAll()));
+    for (const a of ACHIEVEMENT_LIST) {
+      if (a.event) this._unsubs.push(EventBus.on(a.event, (p) => this._tryUnlock(a, () => a.onEvent(p))));
+    }
+    this.recheckAll();
+  }
+
+  recheckAll() {
+    for (const a of ACHIEVEMENT_LIST) {
+      if (a.testSave) this._tryUnlock(a, () => a.testSave(this.save.data));
+      else if (a.test) this._tryUnlock(a, () => a.test(this.save.data.stats));
+    }
+  }
+
+  _tryUnlock(a, predicate) {
+    if (this.save.data.achievements[a.id]?.unlocked) return;
+    let pass = false;
+    try { pass = !!predicate(); } catch { pass = false; }
+    if (!pass) return;
+    this.save.data.achievements[a.id] = { unlocked: true, unlockedAt: Date.now() };
+    this.save.save();
+    EventBus.emit('achievement:unlocked', { id: a.id, name: a.name, reward: a.reward });
+  }
+
+  get unlockedCount() { return ACHIEVEMENT_LIST.filter((a) => this.save.data.achievements[a.id]?.unlocked).length; }
+}
+
+return { Achievements, ACHIEVEMENT_LIST };
+};
+
+__defs['audio/AudioEngine.js'] = function(__require) {
+// All music/SFX is synthesised at runtime with the WebAudio API — no
+// external audio assets, so everything heard is original to this game.
+// Each level declares a `musicTrack` (key into TRACKS below); the engine
+// schedules a looping procedural sequence and emits 'beat' events on the
+// EventBus so gameplay/visuals can sync to it.
+
+const { EventBus } = __require('core/Utils.js');
+
+const SCALES = {
+  minorPent: [0, 3, 5, 7, 10],
+  major: [0, 2, 4, 5, 7, 9, 11],
+  phrygian: [0, 1, 3, 5, 7, 8, 10],
+  wholeTone: [0, 2, 4, 6, 8, 10],
+  minor: [0, 2, 3, 5, 7, 8, 10],
+};
+
+// Track "recipes" — each level picks one by id, giving every difficulty
+// tier a distinct original sonic identity (tempo, scale, timbre, root).
+const TRACKS = {
+  driftwave:   { bpm: 96,  scale: 'major',     root: 220, wave: 'triangle', bass: 'sine' },
+  circuitrun:  { bpm: 128, scale: 'minorPent', root: 196, wave: 'square',   bass: 'sawtooth' },
+  ionstorm:    { bpm: 140, scale: 'phrygian',  root: 174, wave: 'sawtooth', bass: 'square' },
+  glassecho:   { bpm: 110, scale: 'wholeTone', root: 246, wave: 'sine',     bass: 'triangle' },
+  emberpulse:  { bpm: 150, scale: 'minor',     root: 164, wave: 'sawtooth', bass: 'sawtooth' },
+  voidcascade: { bpm: 160, scale: 'phrygian',  root: 146, wave: 'square',   bass: 'square' },
+  auroraline:  { bpm: 102, scale: 'major',     root: 261, wave: 'triangle', bass: 'sine' },
+  neonfracture:{ bpm: 172, scale: 'minorPent', root: 130, wave: 'sawtooth', bass: 'sawtooth' },
+};
+
+class AudioEngine {
+  constructor(saveSystem) {
+    this.save = saveSystem;
+    this.ctx = null;
+    this.musicGain = null;
+    this.sfxGain = null;
+    this.currentTrackId = null;
+    this.beatIndex = 0;
+    this.nextNoteTime = 0;
+    this.scheduleTimer = null;
+    this.bpm = 120;
+    this.running = false;
+    this.rngState = 1;
+  }
+
+  _ensureCtx() {
+    if (this.ctx) return;
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this.musicGain = this.ctx.createGain();
+    this.sfxGain = this.ctx.createGain();
+    this.musicGain.connect(this.ctx.destination);
+    this.sfxGain.connect(this.ctx.destination);
+    this.applyVolumes();
+  }
+
+  applyVolumes() {
+    if (!this.ctx) return;
+    const s = this.save.data.settings;
+    this.musicGain.gain.setTargetAtTime(s.musicVolume, this.ctx.currentTime, 0.05);
+    this.sfxGain.gain.setTargetAtTime(s.sfxVolume, this.ctx.currentTime, 0.05);
+  }
+
+  resume() { this._ensureCtx(); if (this.ctx.state === 'suspended') this.ctx.resume(); }
+
+  // deterministic-ish pseudo random per track so a level always sounds the same
+  _rand() {
+    this.rngState = (this.rngState * 1103515245 + 12345) & 0x7fffffff;
+    return this.rngState / 0x7fffffff;
+  }
+
+  playTrack(trackId, seed = 1) {
+    this._ensureCtx();
+    this.resume();
+    this.stopTrack();
+    const rec = TRACKS[trackId] || TRACKS.driftwave;
+    this.currentTrackId = trackId;
+    this.rngState = (seed * 9973) % 0x7fffffff || 1;
+    this.bpm = rec.bpm;
+    this.beatIndex = 0;
+    this.nextNoteTime = this.ctx.currentTime + 0.05;
+    this.running = true;
+    this._rec = rec;
+    this._scheduleLoop();
+  }
+
+  stopTrack() {
+    this.running = false;
+    if (this.scheduleTimer) clearInterval(this.scheduleTimer);
+    this.scheduleTimer = null;
+    this.currentTrackId = null;
+  }
+
+  _scheduleLoop() {
+    const lookAhead = 0.12;
+    this.scheduleTimer = setInterval(() => {
+      if (!this.running) return;
+      while (this.nextNoteTime < this.ctx.currentTime + lookAhead) {
+        this._scheduleBeat(this.beatIndex, this.nextNoteTime);
+        const secondsPerBeat = 60 / this.bpm / 2; // 8th-note grid
+        this.nextNoteTime += secondsPerBeat;
+        this.beatIndex++;
+      }
+    }, 25);
+  }
+
+  _scheduleBeat(index, time) {
+    const rec = this._rec;
+    const scale = SCALES[rec.scale];
+    const step = index % 16;
+    // Kick/bass on strong beats
+    if (step % 4 === 0) this._blip(rec.root / 2, rec.bass, time, 0.18, 0.5);
+    // Hats on off-beats
+    if (step % 2 === 1) this._noise(time, 0.03, 0.12);
+    // Melody
+    const degree = scale[Math.floor(this._rand() * scale.length)];
+    const octave = step % 8 < 4 ? 1 : 2;
+    const freq = rec.root * Math.pow(2, degree / 12) * octave;
+    if (this._rand() > 0.35) this._blip(freq, rec.wave, time, 0.14, 0.22);
+
+    if (step === 0) EventBus.emit('audio:beat-strong', { time });
+    else EventBus.emit('audio:beat', { time, step });
+    if (step === 0 && (index / 16) % 4 === 0) EventBus.emit('audio:phrase', { time });
+  }
+
+  _blip(freq, type, time, dur, gainVal) {
+    if (!this.ctx) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, time);
+    gain.gain.setValueAtTime(0, time);
+    gain.gain.linearRampToValueAtTime(gainVal, time + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+    osc.connect(gain);
+    gain.connect(this.musicGain);
+    osc.start(time);
+    osc.stop(time + dur + 0.02);
+  }
+
+  _noise(time, dur, gainVal) {
+    if (!this.ctx) return;
+    const bufferSize = this.ctx.sampleRate * dur;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+    const src = this.ctx.createBufferSource();
+    src.buffer = buffer;
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(gainVal, time);
+    src.connect(gain);
+    gain.connect(this.musicGain);
+    src.start(time);
+  }
+
+  // --- One-shot SFX ---
+  sfx(name) {
+    this._ensureCtx();
+    const t = this.ctx.currentTime;
+    switch (name) {
+      case 'jump': this._sweep(420, 720, t, 0.1, 'square', 0.25); break;
+      case 'death': this._sweep(300, 40, t, 0.35, 'sawtooth', 0.35); this._noise(t, 0.25, 0.3); break;
+      case 'coin': this._sweep(700, 1400, t, 0.12, 'sine', 0.3); break;
+      case 'pad': this._sweep(200, 900, t, 0.15, 'triangle', 0.3); break;
+      case 'ring': this._sweep(500, 1100, t, 0.08, 'square', 0.28); break;
+      case 'portal': this._sweep(150, 1200, t, 0.25, 'sawtooth', 0.22); break;
+      case 'checkpoint': this._sweep(500, 800, t, 0.1, 'sine', 0.22); break;
+      case 'complete': this._fanfare(t); break;
+      case 'click': this._sweep(600, 750, t, 0.05, 'square', 0.18); break;
+      default: break;
+    }
+  }
+
+  _sweep(f1, f2, time, dur, type, gainVal) {
+    if (!this.ctx) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(f1, time);
+    osc.frequency.exponentialRampToValueAtTime(Math.max(f2, 1), time + dur);
+    gain.gain.setValueAtTime(gainVal, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+    osc.connect(gain);
+    gain.connect(this.sfxGain);
+    osc.start(time);
+    osc.stop(time + dur + 0.02);
+  }
+
+  _fanfare(t) {
+    [0, 4, 7, 12].forEach((semi, i) => {
+      this._blipSfx(440 * Math.pow(2, semi / 12), t + i * 0.09, 0.3);
+    });
+  }
+
+  _blipSfx(freq, time, dur) {
+    if (!this.ctx) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, time);
+    gain.gain.setValueAtTime(0.3, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+    osc.connect(gain);
+    gain.connect(this.sfxGain);
+    osc.start(time);
+    osc.stop(time + dur + 0.02);
+  }
+}
+
+return { AudioEngine, TRACKS };
+};
+
+__defs['core/Game.js'] = function(__require) {
+const { SaveSystem } = __require('core/SaveSystem.js');
+const { InputManager } = __require('core/InputManager.js');
+const { EventBus } = __require('core/Utils.js');
+const { AudioEngine } = __require('audio/AudioEngine.js');
+const { Renderer } = __require('render/Renderer.js');
+const { ParticleSystem } = __require('render/ParticleSystem.js');
+const { drawLevel, drawPlayer } = __require('render/LevelRenderer.js');
+const { LevelRuntime } = __require('level/LevelRuntime.js');
+const { generateLevel } = __require('levels/generator.js');
+const { getLevelMeta, LEVEL_META } = __require('levels/levelList.js');
+const { getDailyLevel, todayKey } = __require('levels/daily.js');
+const { Progression } = __require('progression/Progression.js');
+const { Statistics } = __require('stats/Statistics.js');
+const { Achievements } = __require('achievements/Achievements.js');
+const { getColorHex } = __require('progression/Cosmetics.js');
+const { UIManager } = __require('ui/UIManager.js');
+const { HUD, buildPauseOverlay, buildCompleteOverlay } = __require('ui/screens/HUD.js');
+const { Editor } = __require('editor/Editor.js');
+
+class Game {
+  constructor() {
+    this.canvas = document.getElementById('game-canvas');
+    this.hudRoot = document.getElementById('hud');
+    this.deathFlashEl = document.getElementById('death-flash');
+
+    this.save = new SaveSystem();
+    this.audio = new AudioEngine(this.save);
+    this.input = new InputManager(this.canvas);
+    this.renderer = new Renderer(this.canvas);
+    this.renderer.quality = this.save.data.settings.graphicsQuality;
+    this.particles = new ParticleSystem();
+    this.particles.enabled = this.save.data.settings.particles;
+
+    this.statistics = new Statistics(this.save);
+    this.progression = new Progression(this.save);
+    this.achievements = new Achievements(this.save);
+
+    this.ui = new UIManager(document.getElementById('ui-root'), this);
+    this.hud = new HUD(this.hudRoot, this);
+    this.editor = new Editor(this);
+
+    this.state = 'menu';
+    this.runtime = null;
+    this.currentMeta = null;
+    this.currentLevelId = null;
+    this.paused = false;
+    this.overlayEl = null;
+    this._prevWorldX = 0;
+    this.lastTime = performance.now();
+
+    this._bindEvents();
+    this.ui.showScreen('mainMenu');
+    requestAnimationFrame(this._loop);
+  }
+
+  _bindEvents() {
+    EventBus.on('level:death', (e) => this._onDeath(e));
+    EventBus.on('level:coin', () => this.audio.sfx('coin'));
+    EventBus.on('level:pad', () => this.audio.sfx('pad'));
+    EventBus.on('level:ring', () => this.audio.sfx('ring'));
+    EventBus.on('level:portal', (e) => { this.audio.sfx('portal'); this.renderer.addPulse(1); this._burst(e.x, e.y, '#ff37a4', 14); });
+    EventBus.on('level:jump', () => this.audio.sfx('jump'));
+    EventBus.on('level:complete', (e) => this._onComplete(e));
+    EventBus.on('level:attempt-start', ({ levelId }) => {
+      if (typeof levelId === 'number') { const p = this.save.getLevelProgress(levelId); p.attempts++; this.save.save(); }
+    });
+    EventBus.on('achievement:unlocked', (e) => this.ui.toast(`🏆 Achievement: ${e.name}`));
+    EventBus.on('progression:reward', (r) => { this._lastReward = r; });
+    EventBus.on('audio:beat-strong', () => this.renderer.addPulse(0.5));
+    window.addEventListener('game:pause-toggle', () => { if (this.state === 'gameplay') this.togglePause(); });
+  }
+
+  // --- level lifecycle -----------------------------------------------
+  startLevel(id, opts = {}) {
+    this.audio.resume();
+    let level;
+    if (id === 'daily') level = getDailyLevel(todayKey());
+    else level = generateLevel(id);
+
+    this.currentLevelId = id;
+    this.currentMeta = typeof id === 'number' ? getLevelMeta(id) : null;
+    this.runtime = new LevelRuntime(level, { practiceMode: !!opts.practice });
+    this._prevWorldX = 0;
+    this.paused = false;
+    this._editorReturn = false;
+    this._clearOverlay();
+    this.ui.hide();
+    this.state = 'gameplay';
+    this.hud.mount(this.runtime);
+    this.audio.playTrack(level.musicTrack, typeof level.id === 'number' ? level.id : 7);
+    if (opts.practice) EventBus.emit('practice:session', {});
+  }
+
+  startDaily() { this.startLevel('daily'); }
+
+  startNextIncomplete() {
+    const next = LEVEL_META.find((l) => !this.save.getLevelProgress(l.id).completed);
+    this.startLevel(next ? next.id : 1);
+  }
+
+  restartLevel() {
+    this._clearOverlay();
+    this.startLevel(this.currentLevelId, { practice: this.runtime?.practiceMode });
+  }
+
+  hasNextLevel() { return typeof this.currentLevelId === 'number' && !!getLevelMeta(this.currentLevelId + 1); }
+  nextLevelId() { return this.currentLevelId + 1; }
+
+  exitToMenu() {
+    this._saveProgressSnapshot();
+    this.audio.stopTrack();
+    this.state = 'menu';
+    this.runtime = null;
+    this._clearOverlay();
+    this.hud.unmount();
+    this.renderer.ctx.clearRect(0, 0, this.renderer.width, this.renderer.height);
+    this.ui.showScreen('mainMenu');
+  }
+
+  togglePause() {
+    if (this.state !== 'gameplay') return;
+    this.paused = !this.paused;
+    if (this.paused) {
+      this.overlayEl = buildPauseOverlay(this, this.runtime);
+      document.getElementById('app').appendChild(this.overlayEl);
+    } else {
+      this._clearOverlay();
+    }
+  }
+
+  _clearOverlay() { if (this.overlayEl) { this.overlayEl.remove(); this.overlayEl = null; } }
+
+  _saveProgressSnapshot() {
+    if (!this.runtime || typeof this.currentLevelId !== 'number') return;
+    const p = this.save.getLevelProgress(this.currentLevelId);
+    p.bestPercent = Math.max(p.bestPercent, this.runtime.bestPercentThisSession);
+    p.deaths += this.runtime.deaths;
+    this.save.save();
+  }
+
+  _onDeath({ x, y }) {
+    const s = this.save.data.settings;
+    this._burst(x, y, getColorHex(this.save, this.save.data.equipped.color), 26);
+    if (s.screenShake) this.renderer.addShake(14);
+    if (!s.reduceFlash) { this.deathFlashEl.classList.remove('show'); void this.deathFlashEl.offsetWidth; this.deathFlashEl.classList.add('show'); }
+    this.audio.sfx('death');
+    this._saveProgressSnapshot();
+  }
+
+  _onComplete(payload) {
+    this.audio.sfx('complete');
+    this.audio.stopTrack();
+    if (typeof this.currentLevelId === 'number' && !payload.practiceMode) {
+      const p = this.save.getLevelProgress(this.currentLevelId);
+      p.completed = true;
+      p.bestPercent = 100;
+      p.bestTimeMs = p.bestTimeMs === null ? payload.timeMs : Math.min(p.bestTimeMs, payload.timeMs);
+      this.runtime.level.coins.forEach((c, i) => { p.coins[i] = p.coins[i] || !!c.collected; });
+      this.save.save();
+    }
+    if (this.currentLevelId === 'daily' && !payload.practiceMode) {
+      const dc = this.save.data.dailyChallenge;
+      const today = todayKey();
+      if (dc.lastCompletedDate !== today) {
+        const yesterday = todayKey(new Date(Date.now() - 86400000));
+        dc.streak = dc.lastCompletedDate === yesterday ? dc.streak + 1 : 1;
+        dc.lastCompletedDate = today;
+        this.save.save();
+        EventBus.emit('daily:complete', {});
+      }
+    }
+    const reward = payload.practiceMode ? null : (this._lastReward || null);
+    this._lastReward = null;
+    this.overlayEl = buildCompleteOverlay(this, { ...payload, reward });
+    document.getElementById('app').appendChild(this.overlayEl);
+    this.hud.unmount();
+  }
+
+  _burst(x, y, color, count) { if (this.save.data.settings.particles) this.particles.burst(x, y, color, count); }
+
+  // --- editor ----------------------------------------------------------
+  openEditor() {
+    this.audio.stopTrack();
+    this.state = 'editor';
+    this.ui.hide();
+    this.hud.unmount();
+    this.editor.mount();
+  }
+
+  exitEditor() { this.editor.unmount(); this.state = 'menu'; this.ui.showScreen('mainMenu'); }
+
+  returnToEditorFromTest() {
+    this._clearOverlay();
+    this.audio.stopTrack();
+    this.hud.unmount();
+    this.runtime = null;
+    this.state = 'editor';
+    this.editor.mount();
+  }
+
+  testPlayEditorLevel() {
+    const level = this.editor.buildLevelData();
+    this.editor.unmount();
+    this.currentLevelId = level.id;
+    this.currentMeta = null;
+    this.runtime = new LevelRuntime(level, { practiceMode: true });
+    this.runtime.level.checkpoints?.forEach((cx) => {
+      this.runtime.checkpoints.push({ worldX: cx, y: level.groundY - 30, form: 'runner', gravityDir: 1, speedMult: 1, mini: false, elapsed: 0, coinState: level.coins.map(() => false) });
+    });
+    this._prevWorldX = 0;
+    this.paused = false;
+    this._editorReturn = true;
+    this._clearOverlay();
+    this.state = 'gameplay';
+    this.hud.mount(this.runtime);
+    this.audio.resume();
+    this.audio.playTrack(level.musicTrack, 3);
+  }
+
+  saveEditorLevel() {
+    const level = this.editor.buildLevelData();
+    this.save.data.editorLevels.push(level);
+    this.save.save();
+    EventBus.emit('editor:save', {});
+    this.ui.toast(`Saved "${level.name}"`);
+  }
+
+  // --- main loop ---------------------------------------------------------
+  _loop = (now) => {
+    const dt = Math.min((now - this.lastTime) / 1000, 1 / 30);
+    this.lastTime = now;
+    const t = now / 1000;
+
+    if (this.state === 'gameplay' && !this.paused) {
+      this._stepGameplay(dt, t);
+    } else if (this.state === 'editor') {
+      this.editor.render(this.renderer, t);
+    }
+
+    this.input.endFrame();
+    requestAnimationFrame(this._loop);
+  };
+
+  _stepGameplay(dt, t) {
+    const r = this.runtime;
+    r.update(dt, this.input);
+    this.particles.update(dt);
+
+    const colorHex = getColorHex(this.save, this.save.data.equipped.color);
+    if (r.player.alive && Math.random() < 0.6) this.particles.trail(r.player.worldX - r.player.halfSize * 0.6, r.player.y, colorHex, 3);
+
+    this.renderer.beginFrame(dt);
+    this.renderer.clear();
+    drawLevel(this.renderer, r.level, r.camX, r.elapsed);
+    if (r.player.alive) drawPlayer(this.renderer, r.player, colorHex, r.camX);
+    this.particles.render(this.renderer.ctx, r.camX);
+    this.renderer.endFrame();
+
+    this.hud.update(r);
+
+    const delta = Math.max(0, r.player.worldX - this._prevWorldX);
+    this._prevWorldX = r.player.worldX;
+    this.statistics.tick(dt, delta);
+  }
+}
+
+return { Game };
+};
+
+__defs['core/InputManager.js'] = function(__require) {
+// Unifies keyboard, mouse and touch input into a single "isPressed" pulse
+// stream the player controller consumes each frame.
+
+class InputManager {
+  constructor(target) {
+    this.target = target;
+    this.pressed = false;   // currently held
+    this.justPressed = false;
+    this.justReleased = false;
+    this._keybinds = { jump: 'Space', altJump: 'ArrowUp' };
+    this._bind();
+  }
+
+  setKeybinds(kb) { this._keybinds = { ...this._keybinds, ...kb }; }
+
+  _isJumpKey(code) {
+    return code === this._keybinds.jump || code === this._keybinds.altJump || code === 'ArrowUp';
+  }
+
+  _bind() {
+    window.addEventListener('keydown', (e) => {
+      if (this._isJumpKey(e.code) || e.code === 'Space') {
+        if (!this.pressed) this.justPressed = true;
+        this.pressed = true;
+        e.preventDefault();
+      }
+      if (e.code === 'Escape') window.dispatchEvent(new CustomEvent('game:pause-toggle'));
+    });
+    window.addEventListener('keyup', (e) => {
+      if (this._isJumpKey(e.code) || e.code === 'Space') {
+        this.justReleased = true;
+        this.pressed = false;
+      }
+    });
+    const down = (e) => { if (!this.pressed) this.justPressed = true; this.pressed = true; e.preventDefault(); };
+    const up = (e) => { this.justReleased = true; this.pressed = false; };
+    this.target.addEventListener('mousedown', down);
+    window.addEventListener('mouseup', up);
+    this.target.addEventListener('touchstart', down, { passive: false });
+    window.addEventListener('touchend', up);
+  }
+
+  // Call once per frame after gameplay reads the flags.
+  endFrame() {
+    this.justPressed = false;
+    this.justReleased = false;
+  }
+}
+
+return { InputManager };
+};
+
+__defs['core/SaveSystem.js'] = function(__require) {
+// Centralised save/load for all player progress. Everything lives under one
+// localStorage key so we can version and migrate the shape in one place.
+
+const SAVE_KEY = 'prismrush.save.v1';
+const SAVE_VERSION = 1;
+
+function defaultSave() {
+  return {
+    version: SAVE_VERSION,
+    currency: 150,
+    xp: 0,
+    playerLevel: 1,
+    unlockedShapes: ['classic'],
+    unlockedTrails: ['none'],
+    unlockedColors: ['neon-cyan'],
+    unlockedDeathEffects: ['spark'],
+    unlockedIcons: ['default'],
+    unlockedBgEffects: ['none'],
+    equipped: { shape: 'classic', trail: 'none', color: 'neon-cyan', deathEffect: 'spark', icon: 'default', bgEffect: 'none' },
+    levels: {}, // id -> { bestPercent, completed, coins:[false,false,false], attempts, bestTimeMs, deaths }
+    achievements: {}, // id -> { unlocked, unlockedAt }
+    stats: {
+      totalAttempts: 0, totalDeaths: 0, levelsCompleted: 0, coinsCollected: 0,
+      totalPlaytimeMs: 0, bestLevelId: null, hardestLevelCompleted: null,
+      totalJumps: 0, totalDistance: 0, practiceSessions: 0,
+    },
+    settings: {
+      musicVolume: 0.7, sfxVolume: 0.8, graphicsQuality: 'high',
+      screenShake: true, particles: true, fullscreen: false,
+      keybinds: { jump: 'Space', pause: 'Escape', altJump: 'ArrowUp' },
+      colorblindMode: false, reduceFlash: false, uiScale: 1,
+    },
+    dailyChallenge: { lastSeed: null, lastCompletedDate: null, streak: 0 },
+    editorLevels: [], // user-created level data blobs
+    createdAt: Date.now(),
+  };
+}
+
+function migrate(data) {
+  const base = defaultSave();
+  return deepMerge(base, data || {});
+}
+
+function deepMerge(base, override) {
+  if (Array.isArray(base)) return override !== undefined ? override : base;
+  if (typeof base === 'object' && base !== null) {
+    const out = { ...base };
+    for (const k of Object.keys(override || {})) {
+      out[k] = typeof base[k] === 'object' && base[k] !== null && !Array.isArray(base[k])
+        ? deepMerge(base[k], override[k])
+        : override[k];
+    }
+    return out;
+  }
+  return override !== undefined ? override : base;
+}
+
+class SaveSystem {
+  constructor() {
+    this.data = this.load();
+  }
+
+  load() {
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return defaultSave();
+      return migrate(JSON.parse(raw));
+    } catch (e) {
+      console.warn('Save corrupted, resetting.', e);
+      return defaultSave();
+    }
+  }
+
+  save() {
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(this.data));
+    } catch (e) {
+      console.warn('Failed to persist save', e);
+    }
+  }
+
+  reset() {
+    this.data = defaultSave();
+    this.save();
+  }
+
+  getLevelProgress(levelId) {
+    if (!this.data.levels[levelId]) {
+      this.data.levels[levelId] = { bestPercent: 0, completed: false, coins: [false, false, false], attempts: 0, bestTimeMs: null, deaths: 0 };
+    }
+    return this.data.levels[levelId];
+  }
+}
+
+return { SaveSystem };
+};
+
+__defs['core/Utils.js'] = function(__require) {
+// Shared math/RNG helpers used across the game.
+
+function  mulberry32(seed) {
+  let a = seed >>> 0;
+  return function rng() {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function  hashStringToSeed(str) {
+  let h = 1779033703 ^ str.length;
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  return (h ^ (h >>> 16)) >>> 0;
+}
+
+function  lerp(a, b, t) { return a + (b - a) * t; }
+function  clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+function  randRange(rng, min, max) { return min + rng() * (max - min); }
+function  randInt(rng, min, max) { return Math.floor(randRange(rng, min, max + 1)); }
+function  choice(rng, arr) { return arr[Math.floor(rng() * arr.length)]; }
+function  pick(rng, arr, n) {
+  const pool = arr.slice();
+  const out = [];
+  for (let i = 0; i < n && pool.length; i++) {
+    out.push(pool.splice(Math.floor(rng() * pool.length), 1)[0]);
+  }
+  return out;
+}
+
+// Simple HSL-based palette generator so every level gets a distinct original theme.
+function  themeFromHue(hue, name) {
+  return {
+    name,
+    hue,
+    bg1: `hsl(${hue} 70% 8%)`,
+    bg2: `hsl(${(hue + 40) % 360} 65% 14%)`,
+    accent: `hsl(${hue} 90% 60%)`,
+    accent2: `hsl(${(hue + 160) % 360} 90% 62%)`,
+    player: `hsl(${(hue + 300) % 360} 95% 65%)`,
+    ground: `hsl(${hue} 60% 20%)`,
+    hazard: `hsl(${(hue + 200) % 360} 90% 55%)`,
+  };
+}
+
+const EventBus = {
+  _listeners: new Map(),
+  on(event, fn) {
+    if (!this._listeners.has(event)) this._listeners.set(event, new Set());
+    this._listeners.get(event).add(fn);
+    return () => this._listeners.get(event)?.delete(fn);
+  },
+  off(event, fn) { this._listeners.get(event)?.delete(fn); },
+  emit(event, payload) {
+    this._listeners.get(event)?.forEach((fn) => fn(payload));
+  },
+};
+
+return { mulberry32, hashStringToSeed, lerp, clamp, randRange, randInt, choice, pick, themeFromHue, EventBus };
+};
+
+__defs['editor/Editor.js'] = function(__require) {
+// Basic modular level editor. New placeable object types can be added by
+// appending to TOOLS — nothing else needs to change, per the "editor should
+// be modular so more objects can be added later" requirement.
+
+const { el, clear } = __require('ui/dom.js');
+const { themeFromHue } = __require('core/Utils.js');
+const O = __require('level/Objects.js');
+
+const GRID = 20;
+const GROUND_Y = 500;
+
+const TOOLS = [
+  { id: 'block', label: 'Block', hint: 'Solid platform' },
+  { id: 'spike', label: 'Spike', hint: 'Ground hazard' },
+  { id: 'spikeCeil', label: 'Ceiling Spike', hint: 'Hangs from above' },
+  { id: 'saw', label: 'Saw', hint: 'Round hazard' },
+  { id: 'pad', label: 'Jump Pad', hint: 'Launches player up' },
+  { id: 'ring', label: 'Jump Ring', hint: 'Tap while touching' },
+  { id: 'portalGravity', label: 'Gravity Portal', hint: 'Flips gravity' },
+  { id: 'portalShip', label: 'Ship Portal', hint: 'Switch to Glider' },
+  { id: 'portalCube', label: 'Cube Portal', hint: 'Switch to Runner' },
+  { id: 'movingPlatform', label: 'Moving Platform', hint: 'Oscillates' },
+  { id: 'disappearingPlatform', label: 'Disappearing Platform', hint: 'Blinks on/off' },
+  { id: 'coin', label: 'Coin', hint: 'Collectible' },
+  { id: 'checkpoint', label: 'Checkpoint', hint: 'Respawn point' },
+  { id: 'eraser', label: 'Eraser', hint: 'Remove nearest object' },
+];
+
+function snap(v) { return Math.round(v / GRID) * GRID; }
+
+class Editor {
+  constructor(game) {
+    this.game = game;
+    this.tool = 'block';
+    this.scrollX = 0;
+    this.state = this._blank();
+    this.selectedId = null;
+  }
+
+  _blank() {
+    return {
+      name: 'Untitled Level', hue: 200, musicTrack: 'driftwave',
+      solids: [], hazards: [], pads: [], rings: [], portals: [], coins: [], checkpoints: [],
+    };
+  }
+
+  loadExisting(customLevel) {
+    this.state = JSON.parse(JSON.stringify(customLevel));
+  }
+
+  newLevel() { this.state = this._blank(); this.scrollX = 0; }
+
+  mount() {
+    this.hudRoot = document.getElementById('hud');
+    clear(this.hudRoot);
+    this._buildToolbar();
+    this._buildPropsPanel();
+    this.game.canvas.addEventListener('click', this._onClick);
+    window.addEventListener('keydown', this._onKey);
+  }
+
+  unmount() {
+    clear(this.hudRoot);
+    this.game.canvas.removeEventListener('click', this._onClick);
+    window.removeEventListener('keydown', this._onKey);
+  }
+
+  _onKey = (e) => {
+    if (e.code === 'ArrowRight') this.scrollX += 200;
+    if (e.code === 'ArrowLeft') this.scrollX = Math.max(0, this.scrollX - 200);
+  };
+
+  _onClick = (e) => {
+    if (e.target !== this.game.canvas) return;
+    const rect = this.game.canvas.getBoundingClientRect();
+    const sx = e.clientX - rect.left;
+    const sy = e.clientY - rect.top;
+    const worldX = snap(this.scrollX + sx);
+    const worldY = snap(sy);
+    this._place(worldX, worldY);
+  };
+
+  _place(x, y) {
+    const s = this.state;
+    switch (this.tool) {
+      case 'block': s.solids.push({ ...O.block(x, y + 40, 60, 40) }); break;
+      case 'spike': s.hazards.push({ ...O.spike(x, GROUND_Y, {}) }); break;
+      case 'spikeCeil': s.hazards.push({ ...O.spike(x, GROUND_Y, { ceiling: true, y }) }); break;
+      case 'saw': s.hazards.push({ ...O.saw(x, y) }); break;
+      case 'pad': s.pads.push({ ...O.pad(x, y + 16) }); break;
+      case 'ring': s.rings.push({ ...O.ring(x, y) }); break;
+      case 'portalGravity': s.portals.push({ ...O.portal(x, y, 200, { gravity: -1, form: 'orb' }, { label: 'GRAVITY' }) }); break;
+      case 'portalShip': s.portals.push({ ...O.portal(x, y, 200, { form: 'glider' }, { label: 'SHIP' }) }); break;
+      case 'portalCube': s.portals.push({ ...O.portal(x, y, 200, { form: 'runner', gravity: 1 }, { label: 'CUBE' }) }); break;
+      case 'movingPlatform': s.solids.push({ ...O.movingPlatform(x, y + 10, 70, 20, { axis: 'y', amplitude: 60, speed: 1.3 }) }); break;
+      case 'disappearingPlatform': s.solids.push({ ...O.disappearingPlatform(x, y + 10, 64, 20, { onTime: 1.2, offTime: 0.8 }) }); break;
+      case 'coin': s.coins.push({ ...O.coin(x, y) }); break;
+      case 'checkpoint': s.checkpoints.push(x); break;
+      case 'eraser': this._eraseNear(x, y); break;
+    }
+    this._refreshProps();
+  }
+
+  _eraseNear(x, y) {
+    const s = this.state;
+    const near = (o) => Math.hypot((o.x ?? 0) - x, (o.y ?? GROUND_Y) - y) < 40;
+    for (const key of ['solids', 'hazards', 'pads', 'rings', 'portals', 'coins']) {
+      const idx = s[key].findIndex(near);
+      if (idx >= 0) { s[key].splice(idx, 1); return; }
+    }
+    const cpIdx = s.checkpoints.findIndex((cx) => Math.abs(cx - x) < 40);
+    if (cpIdx >= 0) s.checkpoints.splice(cpIdx, 1);
+  }
+
+  _buildToolbar() {
+    const bar = el('div', { id: 'editor-toolbar' }, [
+      el('button', { class: 'btn small', onClick: () => this.game.exitEditor() }, ['✕ Exit Editor']),
+      el('h3', { class: 'title-font', style: 'font-size:0.95rem; margin:14px 0 6px;' }, ['Tools']),
+    ]);
+    for (const t of TOOLS) {
+      bar.appendChild(el('button', {
+        class: `btn small${this.tool === t.id ? ' primary' : ''}`,
+        title: t.hint,
+        onClick: () => { this.tool = t.id; this._buildToolbar(); },
+      }, [t.label]));
+    }
+    bar.appendChild(el('div', { class: 'row', style: 'margin-top:14px;' }, [
+      el('button', { class: 'btn small', onClick: () => { this.scrollX = Math.max(0, this.scrollX - 300); } }, ['◀ Scroll']),
+      el('button', { class: 'btn small', onClick: () => { this.scrollX += 300; } }, ['Scroll ▶']),
+    ]));
+    const old = this.hudRoot.querySelector('#editor-toolbar');
+    if (old) old.remove();
+    this.hudRoot.appendChild(bar);
+  }
+
+  _buildPropsPanel() {
+    const s = this.state;
+    const panel = el('div', { id: 'editor-props' }, [
+      el('h3', { class: 'title-font', style: 'font-size:0.95rem;' }, ['Level Settings']),
+      labeled('Name', el('input', { type: 'text', value: s.name, oninput: (e) => { s.name = e.target.value; } })),
+      labeled('Theme Hue', el('input', { type: 'range', min: 0, max: 360, value: s.hue, oninput: (e) => { s.hue = +e.target.value; this._buildPropsPanel(); } })),
+      labeled('Music', musicSelect(s, () => this._buildPropsPanel())),
+      el('div', { class: 'row', style: 'margin: 12px 0; gap:8px;' }, [
+        el('button', { class: 'btn small primary', onClick: () => this.game.testPlayEditorLevel() }, ['▶ Test']),
+        el('button', { class: 'btn small', onClick: () => this.game.saveEditorLevel() }, ['💾 Save']),
+      ]),
+      el('button', { class: 'btn small danger', onClick: () => { if (confirm('Clear the whole level?')) { this.newLevel(); this._buildToolbar(); this._buildPropsPanel(); } } }, ['Clear Level']),
+      el('div', { class: 'small-text', style: 'margin-top:16px;' }, [
+        `Objects: ${s.solids.length + s.hazards.length + s.pads.length + s.rings.length + s.portals.length + s.coins.length}`,
+      ]),
+      el('div', { class: 'small-text' }, [`Checkpoints: ${s.checkpoints.length}`]),
+      el('div', { class: 'hint' }, ['Click the canvas to place the selected tool. Arrow keys or Scroll buttons pan the level.']),
+    ]);
+    const old = this.hudRoot.querySelector('#editor-props');
+    if (old) old.remove();
+    this.hudRoot.appendChild(panel);
+  }
+
+  _refreshProps() {
+    const countEl = this.hudRoot.querySelector('#editor-props .small-text');
+    if (countEl) this._buildPropsPanel();
+  }
+
+  buildLevelData() {
+    const s = this.state;
+    const maxX = Math.max(400, ...[...s.solids, ...s.hazards, ...s.pads, ...s.rings, ...s.portals, ...s.coins].map((o) => o.x || 0), ...s.checkpoints) + 400;
+    return {
+      id: `custom_${Date.now()}`, name: s.name || 'Untitled Level', difficulty: 5, category: 'Custom',
+      musicTrack: s.musicTrack, theme: themeFromHue(s.hue, s.name), length: maxX, groundY: GROUND_Y, killY: 900,
+      startForm: 'runner',
+      solids: [O.ground(0, maxX, GROUND_Y), ...s.solids.map((o) => ({ ...o }))],
+      hazards: s.hazards.map((o) => ({ ...o })), pads: s.pads.map((o) => ({ ...o })), rings: s.rings.map((o) => ({ ...o })),
+      portals: s.portals.map((o) => ({ ...o })), coins: s.coins.map((o) => ({ ...o })),
+      checkpoints: [...s.checkpoints],
+      end: O.endFlag(maxX - 100, GROUND_Y),
+    };
+  }
+
+  render(renderer, t) {
+    renderer.clear();
+    renderer.drawBackground(themeFromHue(this.state.hue, this.state.name), this.scrollX, GROUND_Y, t);
+    const ctx = renderer.ctx;
+    ctx.save();
+    ctx.translate(-this.scrollX, 0);
+    // grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    for (let x = Math.floor(this.scrollX / 100) * 100; x < this.scrollX + renderer.width + 100; x += 100) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, renderer.height); ctx.stroke();
+    }
+    renderer.glowRect(-9999, GROUND_Y, 30000, 4, 'rgba(255,255,255,0.3)', 6);
+    for (const o of this.state.solids) renderer.glowRect(o.x, o.y, o.w, o.h, '#7a5cff', 8);
+    for (const o of this.state.hazards) renderer.glowCircle(o.x, o.y ?? GROUND_Y - 17, o.r || 17, '#ff3b6b', 10);
+    for (const o of this.state.pads) renderer.glowRect(o.x, o.y, o.w, o.h, '#ffd23b', 10);
+    for (const o of this.state.rings) renderer.glowCircle(o.x, o.y, o.r, '#37f0ff', 12);
+    for (const o of this.state.portals) renderer.glowRect(o.x, o.y, o.w, o.h, '#ff37a4', 12);
+    for (const o of this.state.coins) renderer.glowCircle(o.x, o.y, o.r, '#ffd23b', 10);
+    for (const cx of this.state.checkpoints) renderer.glowRect(cx - 3, GROUND_Y - 120, 6, 120, '#37ff8f', 10);
+    ctx.restore();
+  }
+}
+
+function labeled(text, input) {
+  return el('label', { class: 'field' }, [text, input]);
+}
+
+function musicSelect(s, onChange) {
+  const opts = ['driftwave', 'circuitrun', 'ionstorm', 'glassecho', 'emberpulse', 'voidcascade', 'auroraline', 'neonfracture'];
+  const sel = el('select', {});
+  for (const o of opts) sel.appendChild(el('option', { value: o, selected: o === s.musicTrack }, [o]));
+  sel.addEventListener('change', (e) => { s.musicTrack = e.target.value; onChange(); });
+  return sel;
+}
+
+return { Editor, TOOLS };
+};
+
+__defs['level/CollisionSystem.js'] = function(__require) {
+// Updates dynamic level objects (moving platforms, sweeping saws,
+// disappearing platforms) and resolves collisions between the player and
+// the level each frame. Pure functions of (level, player, time) so it is
+// trivially testable / reusable by the editor's test-play mode.
+
+function aabbOverlap(a, b) {
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+function circleAabbOverlap(cx, cy, r, box) {
+  const nx = Math.max(box.x, Math.min(cx, box.x + box.w));
+  const ny = Math.max(box.y, Math.min(cy, box.y + box.h));
+  const dx = cx - nx, dy = cy - ny;
+  return dx * dx + dy * dy < r * r;
+}
+
+function  updateDynamics(level, t) {
+  for (const s of level.solids) {
+    if (s.type === 'movingPlatform') {
+      const off = Math.sin(t * s.speed + s.phase) * s.amplitude;
+      if (s.axis === 'y') { s.y = s.baseY + off; s.x = s.baseX; }
+      else { s.x = s.baseX + off; s.y = s.baseY; }
+    } else if (s.type === 'disappearingPlatform') {
+      const cycle = s.onTime + s.offTime;
+      const local = ((t + s.phase) % cycle + cycle) % cycle;
+      s.visible = local < s.onTime;
+    }
+  }
+  for (const h of level.hazards) {
+    if (h.movingHazard) {
+      const off = Math.sin(t * h.speed + h.phase) * h.amplitude;
+      if (h.axis === 'y') { h.y = h.baseY + off; } else { h.x = h.baseX + off; }
+    }
+  }
+}
+
+// Returns { dead, landed, events: [...] }
+function  resolvePlayer(level, player, input, dt) {
+  const box = player.getHitbox();
+  const result = { dead: false, landed: false, events: [] };
+
+  // Solids (ground/blocks/platforms) — land on top, otherwise crash.
+  for (const s of level.solids) {
+    if (s.type === 'disappearingPlatform' && !s.visible) continue;
+    if (!aabbOverlap(box, s)) continue;
+    const prevBottom = box.y + box.h - player.vy * dt - 1;
+    const fallingOntoTop = player.gravityDir === 1 ? (player.vy >= 0 && prevBottom <= s.y + 6) : false;
+    const risingOntoBottom = player.gravityDir === -1 ? (player.vy <= 0 && (box.y - player.vy * dt) >= s.y + s.h - 6) : false;
+    if (fallingOntoTop) {
+      player.y = s.y - player.halfSize;
+      player.vy = 0;
+      player.onGround = true;
+      result.landed = true;
+    } else if (risingOntoBottom) {
+      player.y = s.y + s.h + player.halfSize;
+      player.vy = 0;
+      player.onGround = true;
+      result.landed = true;
+    } else {
+      result.dead = true;
+    }
+  }
+
+  // Hazards
+  for (const h of level.hazards) {
+    if (h.fake) continue; // visually identical, but harmless
+    let hit = false;
+    if (h.shape === 'circle') hit = circleAabbOverlap(h.x, h.y, h.r, box);
+    else hit = aabbOverlap(box, h);
+    if (hit) { result.dead = true; break; }
+  }
+
+  // Ground bounds (fell into a gap / flew off top or bottom of world)
+  if (player.y > level.killY || player.y < -400) result.dead = true;
+
+  // Pads
+  for (const p of level.pads) {
+    if (aabbOverlap(box, p)) {
+      player.vy = -p.power * player.gravityDir;
+      player.onGround = false;
+      result.events.push({ type: 'pad' });
+    }
+  }
+
+  // Rings — only trigger on a fresh tap while overlapping
+  for (const r of level.rings) {
+    if (input.justPressed && circleAabbOverlap(r.x, r.y, r.r, box)) {
+      player.vy = -r.power * player.gravityDir;
+      player.onGround = false;
+      result.events.push({ type: 'ring' });
+    }
+  }
+
+  // Portals
+  for (const p of level.portals) {
+    if (p._armed === undefined) p._armed = true;
+    const overlapping = aabbOverlap(box, p);
+    if (overlapping && p._armed) {
+      p._armed = false;
+      applyPortalEffect(player, p.effect);
+      result.events.push({ type: 'portal', effect: p.effect });
+    } else if (!overlapping) {
+      p._armed = true;
+    }
+  }
+
+  // Coins
+  for (const c of level.coins) {
+    if (!c.collected && Math.hypot(box.x + box.w / 2 - c.x, box.y + box.h / 2 - c.y) < c.r + 16) {
+      c.collected = true;
+      result.events.push({ type: 'coin', coin: c });
+    }
+  }
+
+  // End
+  if (level.end && box.x + box.w >= level.end.x) result.events.push({ type: 'complete' });
+
+  return result;
+}
+
+function applyPortalEffect(player, effect) {
+  if (effect.gravity !== undefined) player.setGravity(effect.gravity);
+  if (effect.form) player.setForm(effect.form);
+  if (effect.speedMult !== undefined) player.setSpeedMult(effect.speedMult);
+  if (effect.mini !== undefined) player.setMini(effect.mini);
+}
+
+return { updateDynamics, resolvePlayer };
+};
+
+__defs['level/LevelRuntime.js'] = function(__require) {
+const { Player, FORMS } = __require('player/Player.js');
+const { updateDynamics, resolvePlayer } = __require('level/CollisionSystem.js');
+const { EventBus, clamp } = __require('core/Utils.js');
+
+const SCREEN_ANCHOR_X = 240;
+const RESPAWN_DELAY = 0.42; // "nearly instant" restart
+
+// Owns one attempt-at-a-level's worth of live simulation state: the player,
+// elapsed time (which every time-driven hazard/platform is keyed to),
+// checkpoints (practice mode), coin/percent tracking. Emits EventBus events
+// for audio/render/progression layers to react to instead of importing them
+// directly, keeping this module gameplay-only.
+class LevelRuntime {
+  constructor(levelData, opts = {}) {
+    this.level = levelData;
+    this.practiceMode = !!opts.practiceMode;
+    this.player = new Player();
+    this.elapsed = 0;
+    this.attempts = 0;
+    this.deaths = 0;
+    this.bestPercentThisSession = 0;
+    this.percent = 0;
+    this.dead = false;
+    this.respawnTimer = 0;
+    this.completed = false;
+    this.checkpoints = []; // practice mode: { worldX, y, form, gravityDir, speedMult, mini, elapsed, coinState }
+    this.checkpointsEnabled = true;
+    this.speedScale = 1;
+    this.paused = false;
+    this.startTime = performance.now();
+    this._resetRun(true);
+  }
+
+  _resetLevelObjectState() {
+    for (const c of this.level.coins) c.collected = false;
+    for (const p of this.level.portals) p._armed = true;
+  }
+
+  _resetRun(firstTime = false) {
+    this.player.reset(0, this.level.groundY);
+    this.player.setForm(this.level.startForm || FORMS.RUNNER);
+    this.player.setGravity(1);
+    this.player.setSpeedMult(1);
+    this.player.setMini(false);
+    this._resetLevelObjectState();
+    this.elapsed = 0;
+    this.percent = 0;
+    this.dead = false;
+    this.completed = false;
+    if (!firstTime) this.attempts++;
+    EventBus.emit('level:attempt-start', { levelId: this.level.id, attempts: this.attempts });
+  }
+
+  addCheckpoint() {
+    if (!this.practiceMode) return;
+    this.checkpoints.push({
+      worldX: this.player.worldX, y: this.player.y, form: this.player.form,
+      gravityDir: this.player.gravityDir, speedMult: this.player.speedMult, mini: this.player.mini,
+      elapsed: this.elapsed, coinState: this.level.coins.map((c) => c.collected),
+    });
+    EventBus.emit('practice:checkpoint-added', { count: this.checkpoints.length });
+  }
+
+  clearCheckpoints() { this.checkpoints = []; }
+  setCheckpointsEnabled(v) { this.checkpointsEnabled = v; }
+  setSpeedScale(s) { this.speedScale = s; }
+
+  _respawnFromCheckpoint() {
+    const cp = this.checkpoints[this.checkpoints.length - 1];
+    this.player.reset(cp.worldX, this.level.groundY);
+    this.player.y = cp.y;
+    this.player.setForm(cp.form);
+    this.player.setGravity(cp.gravityDir);
+    this.player.setSpeedMult(cp.speedMult);
+    this.player.setMini(cp.mini);
+    this.elapsed = cp.elapsed;
+    this.level.coins.forEach((c, i) => (c.collected = cp.coinState[i]));
+    for (const p of this.level.portals) p._armed = true;
+    this.dead = false;
+    this.completed = false;
+    this.attempts++;
+    EventBus.emit('level:attempt-start', { levelId: this.level.id, attempts: this.attempts });
+  }
+
+  triggerDeath() {
+    if (this.dead) return;
+    this.dead = true;
+    this.deaths++;
+    this.player.kill();
+    EventBus.emit('level:death', { levelId: this.level.id, x: this.player.worldX, y: this.player.y, deaths: this.deaths });
+    this.respawnTimer = RESPAWN_DELAY;
+  }
+
+  update(dt, input) {
+    if (this.paused || this.completed) return;
+    const scaledDt = dt * this.speedScale;
+
+    if (this.dead) {
+      this.respawnTimer -= dt;
+      if (this.respawnTimer <= 0) {
+        if (this.practiceMode && this.checkpointsEnabled && this.checkpoints.length > 0) this._respawnFromCheckpoint();
+        else this._resetRun(false);
+      }
+      return;
+    }
+
+    this.elapsed += scaledDt;
+    updateDynamics(this.level, this.elapsed);
+    this.player.update(scaledDt, input, this.level.groundY, -9999);
+    const result = resolvePlayer(this.level, this.player, input, scaledDt);
+
+    for (const ev of result.events) {
+      if (ev.type === 'coin') EventBus.emit('level:coin', { levelId: this.level.id, coin: ev.coin });
+      else if (ev.type === 'pad') EventBus.emit('level:pad', { x: this.player.worldX, y: this.player.y });
+      else if (ev.type === 'ring') EventBus.emit('level:ring', { x: this.player.worldX, y: this.player.y });
+      else if (ev.type === 'portal') EventBus.emit('level:portal', { x: this.player.worldX, y: this.player.y, effect: ev.effect });
+      else if (ev.type === 'complete') this._finish();
+    }
+
+    if (result.landed) EventBus.emit('level:land', { x: this.player.worldX, y: this.player.y });
+    if (input.justPressed) EventBus.emit('level:jump', {});
+
+    this.percent = clamp((this.player.worldX / this.level.length) * 100, 0, 100);
+    this.bestPercentThisSession = Math.max(this.bestPercentThisSession, this.percent);
+
+    if (result.dead) this.triggerDeath();
+  }
+
+  _finish() {
+    this.completed = true;
+    this.percent = 100;
+    const coinsCollected = this.level.coins.filter((c) => c.collected).length;
+    const timeMs = Math.round(this.elapsed * 1000);
+    EventBus.emit('level:complete', {
+      levelId: this.level.id, timeMs, deaths: this.deaths, attempts: this.attempts,
+      coinsCollected, totalCoins: this.level.coins.length, practiceMode: this.practiceMode,
+      difficulty: this.level.difficulty,
+    });
+  }
+
+  get camX() { return this.player.worldX - SCREEN_ANCHOR_X; }
+  get screenAnchorX() { return SCREEN_ANCHOR_X; }
+}
+
+return { LevelRuntime };
+};
+
+__defs['level/Objects.js'] = function(__require) {
+// Factory helpers for level objects. Keeping construction here (rather than
+// literal objects scattered through pattern/generator code) is what lets the
+// editor and the generator share exactly the same object shapes.
+
+let _uid = 0;
+const uid = () => `o${_uid++}`;
+
+function  ground(x, w, y) { return { id: uid(), type: 'ground', x, y, w, h: 9999, solid: true }; }
+
+function  block(x, y, w = 40, h = 40) { return { id: uid(), type: 'block', x, y: y - h, w, h, solid: true }; }
+
+function  movingPlatform(x, y, w, h, opts = {}) {
+  return {
+    id: uid(), type: 'movingPlatform', solid: true,
+    baseX: x, baseY: y - h, x, y: y - h, w, h,
+    axis: opts.axis || 'y', amplitude: opts.amplitude ?? 90, speed: opts.speed ?? 1.4, phase: opts.phase ?? 0,
+  };
+}
+
+function  disappearingPlatform(x, y, w, h, opts = {}) {
+  return {
+    id: uid(), type: 'disappearingPlatform', solid: true, visible: true,
+    x, y: y - h, w, h,
+    onTime: opts.onTime ?? 1.2, offTime: opts.offTime ?? 0.8, phase: opts.phase ?? 0,
+  };
+}
+
+function  spike(x, groundY, opts = {}) {
+  const w = opts.w || 34, h = opts.h || 34;
+  const ceil = !!opts.ceiling;
+  return {
+    id: uid(), type: 'hazard', shape: 'spike', ceiling: ceil,
+    x, y: ceil ? (opts.y ?? 0) : groundY - h, w, h,
+  };
+}
+
+function  fakeSpike(x, groundY, opts = {}) {
+  // Looks identical to a spike but is flagged non-lethal — rewards players
+  // who learn the level instead of relying purely on reflexes.
+  const s = spike(x, groundY, opts);
+  s.fake = true;
+  return s;
+}
+
+function  saw(x, y, opts = {}) {
+  return { id: uid(), type: 'hazard', shape: 'circle', x, y, r: opts.r || 22 };
+}
+
+function  sawTrack(x, y, opts = {}) {
+  return { id: uid(), type: 'hazard', shape: 'circle', movingHazard: true, baseX: x, baseY: y, x, y, r: opts.r || 20, axis: opts.axis || 'x', amplitude: opts.amplitude ?? 80, speed: opts.speed ?? 1.6, phase: opts.phase ?? 0 };
+}
+
+function  pad(x, y, opts = {}) {
+  return { id: uid(), type: 'pad', x, y: y - 16, w: 34, h: 16, power: opts.power ?? 900, kind: opts.kind || 'yellow' };
+}
+
+function  ring(x, y, opts = {}) {
+  return { id: uid(), type: 'ring', x, y, r: 22, power: opts.power ?? 760 };
+}
+
+function  portal(x, y, h, effect, opts = {}) {
+  return { id: uid(), type: 'portal', x, y: y - h / 2, w: opts.w || 44, h, effect, label: opts.label || '' };
+}
+
+function  coin(x, y, opts = {}) {
+  return { id: uid(), type: 'coin', x, y, r: 14, collected: false, hard: !!opts.hard };
+}
+
+function  endFlag(x, groundY) {
+  return { id: uid(), type: 'end', x, y: groundY - 120, w: 20, h: 240 };
+}
+
+return { ground, block, movingPlatform, disappearingPlatform, spike, fakeSpike, saw, sawTrack, pad, ring, portal, coin, endFlag };
+};
+
+__defs['levels/authored.js'] = function(__require) {
+// Levels 1-5 are hand-authored so the very first minutes of the game teach
+// jump timing, gaps, jump rings, gravity flips and flight purely through
+// level design — no tutorial popups or text boxes.
+
+const { LevelBuilder } = __require('levels/patterns.js');
+const O = __require('level/Objects.js');
+
+function build(meta, fn) {
+  const b = new LevelBuilder(500);
+  fn(b);
+  const endX = b.cursor + 420;
+  b.finalizeGround(endX);
+  return {
+    id: meta.id, name: meta.name, difficulty: meta.difficulty, category: meta.category,
+    musicTrack: meta.musicTrack, theme: meta.theme, length: endX, groundY: 500, killY: 900,
+    startForm: 'runner',
+    solids: b.solids, hazards: b.hazards, pads: b.pads, rings: b.rings, portals: b.portals, coins: b.coins,
+    end: O.endFlag(endX - 100, 500),
+  };
+}
+
+const AUTHORED_BUILDERS = {
+  1(meta) {
+    // Teaches: jump over a single spike, then a gap.
+    return build(meta, (b) => {
+      b.advance(120);
+      b.addSpike(160);
+      b.addCoin(130, false);
+      b.advance(100);
+      b.gap(90);
+      b.advance(140);
+      b.addSpike(140);
+      b.gap(100);
+      b.addCoin(150, true);
+      b.advance(160);
+    });
+  },
+  2(meta) {
+    // Teaches: back-to-back spikes need a bigger jump; jump pads launch you higher.
+    return build(meta, (b) => {
+      b.advance(100);
+      b.addSpike(60); b.addSpike(140);
+      b.addCoin(130, false);
+      b.gap(110);
+      b.advance(120);
+      b.addBlock(40, 40, 130);
+      b.addPad('yellow', 900, 140);
+      b.addSpike(90); b.addSpike(90); b.addSpike(140);
+      b.addCoin(160, true);
+      b.advance(160);
+    });
+  },
+  3(meta) {
+    // Teaches: jump rings need a tap while overlapping them, and small saws.
+    return build(meta, (b) => {
+      b.advance(120);
+      b.addRing(700, 420, 160);
+      b.addCoin(150, false);
+      b.gap(120);
+      b.advance(120);
+      b.addSaw({ y: 460 }, 150);
+      b.addRing(760, 400, 150);
+      b.gap(130);
+      b.addCoin(160, true);
+      b.advance(160);
+    });
+  },
+  4(meta) {
+    // Teaches: gravity portals flip you to the ceiling in orb form.
+    return build(meta, (b) => {
+      b.advance(120);
+      b.addSpike(150);
+      b.addPortal({ gravity: -1, form: 'orb' }, 'GRAVITY');
+      b.addSpike(110);
+      b.addCoin(460, false);
+      b.addSpike(140);
+      b.addPortal({ gravity: 1, form: 'runner' }, 'NORMAL');
+      b.gap(100);
+      b.addCoin(160, true);
+      b.advance(160);
+    });
+  },
+  5(meta) {
+    // Teaches: glider form flies freely — hold to rise, release to fall.
+    return build(meta, (b) => {
+      b.advance(120);
+      b.addSpike(150);
+      b.addPortal({ form: 'glider' }, 'FLY');
+      b.addWallPair(50, 400, 120, 160);
+      b.addCoin(240, false);
+      b.addWallPair(50, 440, 160, 160);
+      b.addWallPair(50, 380, 100, 160);
+      b.addPortal({ form: 'runner' }, 'LAND');
+      b.gap(90);
+      b.addCoin(150, true);
+      b.advance(160);
+    });
+  },
+};
+
+function  isAuthored(id) { return !!AUTHORED_BUILDERS[id]; }
+function  buildAuthoredLevel(meta) { return AUTHORED_BUILDERS[meta.id](meta); }
+
+return { isAuthored, buildAuthoredLevel };
+};
+
+__defs['levels/daily.js'] = function(__require) {
+// The Daily Challenge is a freshly composed level, deterministic per
+// calendar date (UTC) so every player sees the same layout on a given day.
+
+const { LevelBuilder, PATTERNS } = __require('levels/patterns.js');
+const O = __require('level/Objects.js');
+const { mulberry32, hashStringToSeed, choice, themeFromHue } = __require('core/Utils.js');
+const { TRACKS } = __require('audio/AudioEngine.js');
+
+const ALL_STYLES = Object.keys(PATTERNS);
+const TRACK_KEYS = Object.keys(TRACKS);
+
+function  todayKey(date = new Date()) {
+  return date.toISOString().slice(0, 10);
+}
+
+function  getDailyLevel(dateKey = todayKey()) {
+  const seed = hashStringToSeed(`daily:${dateKey}`);
+  const rng = mulberry32(seed);
+  const difficultyScale = 0.35 + rng() * 0.4;
+  const patternCount = 6 + Math.round(difficultyScale * 8);
+  const styles = [];
+  for (let i = 0; i < 5; i++) styles.push(choice(rng, ALL_STYLES));
+
+  const b = new LevelBuilder(500);
+  let coinsPlaced = 0;
+  const checkpoints = [0.3, 0.6, 0.9].map((f) => Math.round(patternCount * f));
+  for (let i = 0; i < patternCount; i++) {
+    if (rng() < 0.25) b.addPad(choice(rng, ['yellow', 'pink']), 850, 90);
+    PATTERNS[choice(rng, styles)](b, rng, difficultyScale);
+    b.advance(70 + rng() * 50);
+    if (coinsPlaced < 3 && checkpoints.includes(i)) { b.addCoin(140, true); coinsPlaced++; }
+  }
+  while (coinsPlaced < 3) { b.addCoin(140, true); b.advance(90); coinsPlaced++; }
+
+  const endX = b.cursor + 420;
+  b.finalizeGround(endX);
+  const hue = Math.floor(rng() * 360);
+
+  return {
+    id: 'daily', name: `Daily Run — ${dateKey}`, difficulty: Math.round(3 + difficultyScale * 6), category: 'Daily',
+    musicTrack: TRACK_KEYS[seed % TRACK_KEYS.length], theme: themeFromHue(hue, dateKey),
+    length: endX, groundY: 500, killY: 900, startForm: 'runner',
+    solids: b.solids, hazards: b.hazards, pads: b.pads, rings: b.rings, portals: b.portals, coins: b.coins,
+    end: O.endFlag(endX - 100, 500),
+  };
+}
+
+return { todayKey, getDailyLevel };
+};
+
+__defs['levels/generator.js'] = function(__require) {
+// Turns level metadata (levelList.js) into a fully playable level object.
+// Levels 1-5 are hand-authored; everything else is composed deterministically
+// from the pattern library so re-generating the same id always yields the
+// same layout (needed for level select stats / best-time comparisons).
+
+const { LevelBuilder, PATTERNS } = __require('levels/patterns.js');
+const O = __require('level/Objects.js');
+const { mulberry32, choice } = __require('core/Utils.js');
+const { getLevelMeta } = __require('levels/levelList.js');
+const { isAuthored, buildAuthoredLevel } = __require('levels/authored.js');
+
+const cache = new Map();
+
+function composeLevel(meta) {
+  const rng = mulberry32(meta.seed);
+  const b = new LevelBuilder(500);
+  const diff = meta.difficultyScale;
+  let coinsPlaced = 0;
+  const coinCheckpoints = [0.28, 0.55, 0.85].map((f) => Math.round(meta.patternCount * f));
+
+  for (let i = 0; i < meta.patternCount; i++) {
+    if (rng() < 0.22 + diff * 0.1) b.addPad(choice(rng, ['yellow', 'pink']), 820 + rng() * 260, 90);
+    else if (rng() < 0.14) b.addRing(680 + rng() * 200, null, 90);
+
+    const key = choice(rng, meta.styles);
+    PATTERNS[key](b, rng, diff);
+    b.advance(70 + rng() * 60);
+
+    if (coinsPlaced < 3 && coinCheckpoints.includes(i)) {
+      b.addCoin(130 + rng() * 90, true);
+      coinsPlaced++;
+    }
+  }
+  while (coinsPlaced < 3) {
+    b.addCoin(140, true);
+    b.advance(90);
+    coinsPlaced++;
+  }
+
+  const endX = b.cursor + 420;
+  b.finalizeGround(endX);
+
+  return {
+    id: meta.id, name: meta.name, difficulty: meta.difficulty, category: meta.category,
+    musicTrack: meta.musicTrack, theme: meta.theme, length: endX, groundY: 500, killY: 900,
+    startForm: 'runner',
+    solids: b.solids, hazards: b.hazards, pads: b.pads, rings: b.rings, portals: b.portals, coins: b.coins,
+    end: O.endFlag(endX - 100, 500),
+  };
+}
+
+function  generateLevel(id) {
+  if (cache.has(id)) return cloneRuntime(cache.get(id));
+  const meta = getLevelMeta(id);
+  if (!meta) throw new Error(`No such level: ${id}`);
+  const level = isAuthored(id) ? buildAuthoredLevel(meta) : composeLevel(meta);
+  cache.set(id, level);
+  return cloneRuntime(level);
+}
+
+// LevelRuntime mutates object state (coin.collected, portal._armed, platform
+// positions) in place, so every fresh attempt needs its own deep copy of the
+// static layout while sharing the same underlying design.
+function cloneRuntime(level) {
+  return {
+    ...level,
+    solids: level.solids.map((s) => ({ ...s })),
+    hazards: level.hazards.map((h) => ({ ...h })),
+    pads: level.pads.map((p) => ({ ...p })),
+    rings: level.rings.map((r) => ({ ...r })),
+    portals: level.portals.map((p) => ({ ...p })),
+    coins: level.coins.map((c) => ({ ...c })),
+    end: { ...level.end },
+  };
+}
+
+return { generateLevel };
+};
+
+__defs['levels/levelList.js'] = function(__require) {
+// Metadata for all 50 levels. Each entry drives both the procedural
+// generator (styles/difficultyScale) and the UI (name/category/theme/music).
+// Levels 1-5 are hand-authored (see authored.js); 6-50 are composed from the
+// pattern library in patterns.js, so every level still gets a unique,
+// deterministic layout, palette and soundtrack seed.
+
+const { mulberry32, hashStringToSeed, pick, themeFromHue } = __require('core/Utils.js');
+const { TRACKS } = __require('audio/AudioEngine.js');
+
+const NAMES = [
+  'First Steps', 'Double Take', 'Ring Test', 'Flip Side', 'Takeoff',
+  'Neon Alley', 'Block Party', 'Skyline Dash', 'Gapminder', 'Easy Street Ends',
+  'Circuit Drift', 'Static Bloom', 'Afterglow', 'Vertigo Line', 'Echo Chamber',
+  'Pulse Width', 'Fracture Point', 'Glass Ceiling', 'Loop Back', 'Overclock',
+  'Ion Trail', 'Split Signal', 'Hollow Grid', 'Wrong Turn', 'Freefall Protocol',
+  'Cascade Fault', 'Night Cycle', 'Prism Break', 'Recoil', 'Last Light',
+  'Voltage Spike', 'Blackout Run', 'Severance', 'Warp Static', 'Ashen Circuit',
+  'Null Gravity', 'Fever Dream', 'Wire Storm', 'Collapse Theory', 'The Undertow',
+  'Emberfall', 'Corrosion', 'Deadlock', 'Vantablack', 'Paradox Loop',
+  'The Reckoning', 'Hollow King', 'Requiem Line', 'Singularity', 'Apex Demon',
+];
+
+const CATEGORY_DEFS = [
+  { key: 'Easy', start: 1, end: 10, diff: [0.04, 0.28], stars: [1, 2], styleCount: 3,
+    pool: ['reaction', 'precision', 'zigzag', 'fake', 'timedJumps'] },
+  { key: 'Normal', start: 11, end: 20, diff: [0.30, 0.48], stars: [3, 4], styleCount: 4,
+    pool: ['reaction', 'precision', 'zigzag', 'fake', 'timedJumps', 'movingPlatforms', 'disappearing', 'portals', 'gravity'] },
+  { key: 'Hard', start: 21, end: 30, diff: [0.50, 0.68], stars: [5, 6], styleCount: 5,
+    pool: ['reaction', 'precision', 'zigzag', 'movingPlatforms', 'disappearing', 'portals', 'gravity', 'reverseGravity', 'flight', 'speedChanges'] },
+  { key: 'Insane', start: 31, end: 40, diff: [0.70, 0.86], stars: [7, 8], styleCount: 6,
+    pool: ['reaction', 'precision', 'zigzag', 'movingPlatforms', 'disappearing', 'portals', 'gravity', 'reverseGravity', 'flight', 'speedChanges', 'rhythm', 'boss', 'fake', 'timedJumps'] },
+  { key: 'Demon', start: 41, end: 50, diff: [0.88, 1.0], stars: [9, 10], styleCount: 7,
+    pool: ['reaction', 'precision', 'zigzag', 'movingPlatforms', 'disappearing', 'portals', 'gravity', 'reverseGravity', 'flight', 'speedChanges', 'rhythm', 'boss', 'chase', 'fake', 'timedJumps'] },
+];
+
+const TRACK_KEYS = Object.keys(TRACKS);
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+const LEVEL_META = [];
+
+for (const cat of CATEGORY_DEFS) {
+  const count = cat.end - cat.start + 1;
+  for (let i = 0; i < count; i++) {
+    const id = cat.start + i;
+    const t = count > 1 ? i / (count - 1) : 0;
+    const name = NAMES[id - 1];
+    const seed = hashStringToSeed(`${id}:${name}`);
+    const rng = mulberry32(seed);
+    const difficultyScale = lerp(cat.diff[0], cat.diff[1], t);
+    const stars = Math.round(lerp(cat.stars[0], cat.stars[1], t));
+    const styles = pick(rng, cat.pool, Math.min(cat.styleCount, cat.pool.length));
+    const musicTrack = TRACK_KEYS[id % TRACK_KEYS.length];
+    const hue = Math.floor(rng() * 360);
+    LEVEL_META.push({
+      id, name, category: cat.key, difficulty: stars, difficultyScale,
+      styles, musicTrack, theme: themeFromHue(hue, name), seed,
+      patternCount: 5 + Math.round(difficultyScale * 11),
+    });
+  }
+}
+
+function  getLevelMeta(id) { return LEVEL_META.find((l) => l.id === id); }
+function  getLevelsByCategory(cat) { return LEVEL_META.filter((l) => l.category === cat); }
+const CATEGORIES = CATEGORY_DEFS.map((c) => c.key);
+
+return { getLevelMeta, getLevelsByCategory, LEVEL_META, CATEGORIES };
+};
+
+__defs['levels/patterns.js'] = function(__require) {
+// LevelBuilder: a small DSL for laying out a level left-to-right. Ground is
+// assumed continuous; calling gap() carves a hole that must be jumped,
+// flown over, or bridged with a platform. Patterns below are the 15
+// gameplay "styles" requested for level variety — each is a reusable,
+// difficulty-scaled chunk of obstacles a level composes several of.
+
+const O = __require('level/Objects.js');
+const { clamp } = __require('core/Utils.js');
+
+class LevelBuilder {
+  constructor(groundY = 500) {
+    this.groundY = groundY;
+    this.cursor = 320;
+    this.solids = [];
+    this.hazards = [];
+    this.pads = [];
+    this.rings = [];
+    this.portals = [];
+    this.coins = [];
+    this.gaps = [];
+  }
+
+  advance(w) { this.cursor += w; return this.cursor; }
+
+  gap(width) {
+    const x1 = this.cursor, x2 = this.cursor + width;
+    this.gaps.push({ x1, x2 });
+    this.cursor = x2;
+    return { x1, x2 };
+  }
+
+  addSpike(spacingAfter = 90, opts = {}) {
+    this.hazards.push(O.spike(this.cursor, this.groundY, opts));
+    this.advance(spacingAfter);
+  }
+
+  addFakeSpike(spacingAfter = 90, opts = {}) {
+    this.hazards.push(O.fakeSpike(this.cursor, this.groundY, opts));
+    this.advance(spacingAfter);
+  }
+
+  addSaw(opts = {}, spacingAfter = 110) {
+    this.hazards.push(O.saw(this.cursor, opts.y ?? this.groundY - 40, opts));
+    this.advance(spacingAfter);
+  }
+
+  addSawTrack(opts = {}, spacingAfter = 150) {
+    this.hazards.push(O.sawTrack(this.cursor, opts.y ?? this.groundY - 60, opts));
+    this.advance(spacingAfter);
+  }
+
+  addBlock(w, h, spacingAfter = 90, yTop = null) {
+    const yRef = yTop !== null ? yTop + h : this.groundY;
+    this.solids.push(O.block(this.cursor, yRef, w, h));
+    this.advance(spacingAfter);
+  }
+
+  addWallPair(w, floorTopY, ceilBottomY, spacingAfter = 140) {
+    const floorH = Math.max(4, this.groundY - floorTopY);
+    const ceilH = Math.max(4, ceilBottomY);
+    this.solids.push(O.block(this.cursor, this.groundY, w, floorH));
+    this.solids.push(O.block(this.cursor, ceilBottomY, w, ceilH));
+    this.advance(spacingAfter);
+  }
+
+  addMovingPlatform(w, h, opts = {}, spacingAfter = 150) {
+    this.solids.push(O.movingPlatform(this.cursor, this.groundY - (opts.height ?? 60), w, h, opts));
+    this.advance(spacingAfter);
+  }
+
+  addDisappearingPlatform(w, h, opts = {}, spacingAfter = 130) {
+    this.solids.push(O.disappearingPlatform(this.cursor, this.groundY, w, h, opts));
+    this.advance(spacingAfter);
+  }
+
+  addPad(kind, power, spacingAfter = 100) {
+    this.pads.push(O.pad(this.cursor, this.groundY, { kind, power }));
+    this.advance(spacingAfter);
+  }
+
+  addRing(power, y, spacingAfter = 100) {
+    this.rings.push(O.ring(this.cursor, y ?? this.groundY - 90, { power }));
+    this.advance(spacingAfter);
+  }
+
+  addPortal(effect, label = '', spacingAfter = 60) {
+    this.portals.push(O.portal(this.cursor, this.groundY - 90, 200, effect, { label }));
+    this.advance(spacingAfter);
+  }
+
+  addCoin(yOffset = 140, hard = false) {
+    this.coins.push(O.coin(this.cursor, this.groundY - yOffset, { hard }));
+  }
+
+  finalizeGround(endX) {
+    const sorted = [...this.gaps].sort((a, b) => a.x1 - b.x1);
+    let last = 0;
+    const segs = [];
+    for (const g of sorted) {
+      if (g.x1 > last) segs.push({ x1: last, x2: g.x1 });
+      last = Math.max(last, g.x2);
+    }
+    if (last < endX) segs.push({ x1: last, x2: endX });
+    for (const s of segs) this.solids.unshift(O.ground(s.x1, s.x2 - s.x1, this.groundY));
+  }
+}
+
+// --- 15 gameplay-style pattern chunks -------------------------------------
+
+function  patternReaction(b, rng, diff) {
+  const n = 3 + Math.round(diff * 3);
+  for (let i = 0; i < n; i++) {
+    b.gap(55 + rng() * 15);
+    b.addSpike(60 - diff * 14);
+  }
+}
+
+function  patternPrecision(b, rng, diff) {
+  const n = 3 + Math.round(diff * 2);
+  for (let i = 0; i < n; i++) {
+    b.gap(70 + rng() * 12);
+    b.addBlock(36, 30, 110);
+  }
+}
+
+function  patternGravity(b, rng, diff) {
+  b.addPortal({ gravity: -1, form: 'orb' }, 'GRAVITY');
+  const n = 3 + Math.round(diff * 3);
+  for (let i = 0; i < n; i++) b.addSpike(95, { ceiling: i % 2 === 0 });
+  b.addPortal({ gravity: 1, form: 'runner' }, 'NORMAL');
+}
+
+function  patternReverseGravity(b, rng, diff) {
+  b.addPortal({ gravity: -1 }, 'FLIP');
+  const n = 3 + Math.round(diff * 2);
+  for (let i = 0; i < n; i++) {
+    b.addBlock(40, 34, 100, i % 2 === 0 ? 40 : null);
+  }
+  b.addPortal({ gravity: 1 }, 'FLIP');
+}
+
+function  patternFlight(b, rng, diff) {
+  b.addPortal({ form: 'glider' }, 'FLY');
+  const n = 5 + Math.round(diff * 5);
+  let windowY = b.groundY - 150;
+  for (let i = 0; i < n; i++) {
+    windowY = clamp(windowY + (rng() - 0.5) * (70 + diff * 50), b.groundY - 260, b.groundY - 70);
+    const gapH = 130 - diff * 30;
+    b.addWallPair(56, windowY + gapH / 2, windowY - gapH / 2, 150 - diff * 15);
+  }
+  b.addPortal({ form: 'runner' }, 'LAND');
+}
+
+function  patternZigzag(b, rng, diff) {
+  const n = 5 + Math.round(diff * 4);
+  let high = false;
+  for (let i = 0; i < n; i++) {
+    b.gap(60);
+    b.addBlock(40, high ? 96 : 40, 60);
+    high = !high;
+  }
+}
+
+function  patternMovingPlatforms(b, rng, diff) {
+  const n = 3 + Math.round(diff * 2);
+  const spacing = 150;
+  const start = b.cursor;
+  b.gap(spacing * n + 60);
+  let x = start + 90;
+  for (let i = 0; i < n; i++) {
+    b.solids.push(O.movingPlatform(x, b.groundY - 40, 74, 20, { axis: 'y', amplitude: 40 + diff * 40, speed: 1.1 + diff * 0.6, phase: i * 1.4 }));
+    x += spacing;
+  }
+}
+
+function  patternDisappearing(b, rng, diff) {
+  const n = 3 + Math.round(diff * 3);
+  const spacing = 130;
+  const start = b.cursor;
+  b.gap(spacing * n + 40);
+  let x = start + 80;
+  for (let i = 0; i < n; i++) {
+    b.solids.push(O.disappearingPlatform(x, b.groundY, 64, 20, { onTime: 1.1 - diff * 0.3, offTime: 0.6 + diff * 0.2, phase: i * 0.5 }));
+    x += spacing;
+  }
+}
+
+function  patternFakeObstacles(b, rng, diff) {
+  const n = 3 + Math.round(diff * 2);
+  for (let i = 0; i < n; i++) {
+    if (rng() < 0.5) b.addFakeSpike(95);
+    else b.addSpike(95);
+  }
+}
+
+function  patternTimedJumps(b, rng, diff) {
+  const n = 3 + Math.round(diff * 2);
+  for (let i = 0; i < n; i++) {
+    b.addSawTrack({ axis: 'x', amplitude: 60 + diff * 30, speed: 1.4 + diff * 0.5, phase: i, y: b.groundY - 50 }, 160);
+    b.gap(70);
+  }
+}
+
+function  patternSpeedChanges(b, rng, diff) {
+  const speeds = [1.4, 0.75, 1.6, 1];
+  for (const s of speeds) {
+    b.addPortal({ speedMult: s }, s > 1 ? 'FAST' : 'SLOW');
+    const n = 2 + Math.round(diff * 2);
+    for (let i = 0; i < n; i++) b.addSpike(90 * (2 - s));
+  }
+  b.addPortal({ speedMult: 1 }, 'NORMAL');
+}
+
+function  patternPortals(b, rng, diff) {
+  const forms = ['orb', 'runner', 'booster', 'runner'];
+  for (const f of forms) {
+    b.addPortal({ form: f, gravity: 1 }, f.toUpperCase());
+    const n = 2 + Math.round(diff * 2);
+    for (let i = 0; i < n; i++) {
+      if (f === 'booster') b.addSpike(100);
+      else b.addBlock(36, 34, 100);
+    }
+  }
+}
+
+function  patternBoss(b, rng, diff) {
+  // A dense, telegraphed multi-hazard gauntlet that reads as a "boss room".
+  b.addPortal({ speedMult: 1.15 }, 'DANGER');
+  const waves = 3 + Math.round(diff * 2);
+  for (let w = 0; w < waves; w++) {
+    b.addSawTrack({ axis: 'y', amplitude: 70, speed: 2 + diff, phase: w, y: b.groundY - 70 }, 150);
+    b.addSpike(80);
+    b.addSpike(80);
+    b.gap(70);
+  }
+  b.addPortal({ speedMult: 1 }, 'CLEAR');
+}
+
+function  patternChase(b, rng, diff) {
+  // A relentless low-ceiling corridor that reads as being "chased" —
+  // the shrinking headroom forces a no-stalling sprint to the exit.
+  b.addPortal({ speedMult: 1.25 }, 'RUN');
+  const n = 5 + Math.round(diff * 4);
+  for (let i = 0; i < n; i++) {
+    b.addWallPair(50, b.groundY - 40, 130 + (i % 3) * 20, 120);
+  }
+  b.addPortal({ speedMult: 1 }, 'SAFE');
+}
+
+function  patternRhythm(b, rng, diff) {
+  const n = 6 + Math.round(diff * 4);
+  for (let i = 0; i < n; i++) {
+    b.addSpike(64); // evenly spaced spike train synced to the music grid
+  }
+}
+
+const PATTERNS = {
+  reaction: patternReaction,
+  precision: patternPrecision,
+  gravity: patternGravity,
+  reverseGravity: patternReverseGravity,
+  flight: patternFlight,
+  zigzag: patternZigzag,
+  movingPlatforms: patternMovingPlatforms,
+  disappearing: patternDisappearing,
+  fake: patternFakeObstacles,
+  timedJumps: patternTimedJumps,
+  speedChanges: patternSpeedChanges,
+  portals: patternPortals,
+  boss: patternBoss,
+  chase: patternChase,
+  rhythm: patternRhythm,
+};
+
+return { patternReaction, patternPrecision, patternGravity, patternReverseGravity, patternFlight, patternZigzag, patternMovingPlatforms, patternDisappearing, patternFakeObstacles, patternTimedJumps, patternSpeedChanges, patternPortals, patternBoss, patternChase, patternRhythm, LevelBuilder, PATTERNS };
+};
+
+__defs['main.js'] = function(__require) {
+const { Game } = __require('core/Game.js');
+
+window.addEventListener('DOMContentLoaded', () => {
+  window.__game = new Game();
+});
+
+return {  };
+};
+
+__defs['player/Player.js'] = function(__require) {
+// Player physics for all five movement forms. The player's screen X is
+// fixed; the world scrolls underneath (camera.x == player's world X minus
+// the fixed screen offset). Collision resolution happens in CollisionSystem
+// which calls back into hooks exposed here (land(), die(), etc).
+
+const FORMS = {
+  RUNNER: 'runner',   // cube-like: discrete jump, gravity flip via portals
+  GLIDER: 'glider',   // ship-like: hold to fly up, free vertical movement
+  ORB: 'orb',         // ball-like: tap flips gravity instantly, rolls
+  PULSE: 'pulse',     // wave-like: diagonal zigzag, thin hitbox
+  BOOSTER: 'booster', // ufo-like: tap = fixed burst jump, multi-tap chains
+};
+
+const GRAVITY = 2200;
+const RUNNER_JUMP = 780;
+const GLIDER_THRUST = 1500;
+const GLIDER_MAX_VY = 620;
+const PULSE_DIAG_SPEED = 520;
+const BOOSTER_BURST_VY = -560;
+
+class Player {
+  constructor() {
+    this.reset();
+  }
+
+  reset(startX = 0, groundY = 500) {
+    this.worldX = startX;
+    this.y = groundY - 30;
+    this.vy = 0;
+    this.size = 30;
+    this.baseSize = 30;
+    this.mini = false;
+    this.form = FORMS.RUNNER;
+    this.gravityDir = 1; // 1 = normal (down), -1 = flipped
+    this.onGround = false;
+    this.rotation = 0;
+    this.speedMult = 1;
+    this.baseSpeed = 340;
+    this.alive = true;
+    this.trailTimer = 0;
+    this.boosterUsed = false;
+    this.justLanded = false;
+    this.deathAt = null;
+  }
+
+  get speed() { return this.baseSpeed * this.speedMult; }
+  get halfSize() { return (this.mini ? this.size * 0.6 : this.size) / 2; }
+
+  setForm(form) {
+    this.form = form;
+    this.boosterUsed = false;
+    if (form === FORMS.GLIDER || form === FORMS.PULSE) this.onGround = false;
+  }
+
+  setGravity(dir) { this.gravityDir = dir; }
+  setMini(mini) { this.mini = mini; }
+  setSpeedMult(mult) { this.speedMult = mult; }
+
+  // ceilingY/groundY define the current flight corridor (levels can narrow it)
+  update(dt, input, groundY, ceilingY = -Infinity) {
+    if (!this.alive) return;
+    const g = GRAVITY * this.gravityDir;
+    this.worldX += this.speed * dt;
+
+    switch (this.form) {
+      case FORMS.RUNNER: {
+        this.vy += g * dt;
+        if (input.justPressed && this.onGround) {
+          this.vy = -RUNNER_JUMP * this.gravityDir;
+          this.onGround = false;
+        }
+        this.rotation += (this.onGround ? 0 : 1) * dt * 9 * this.gravityDir;
+        break;
+      }
+      case FORMS.GLIDER: {
+        this.vy += g * dt;
+        if (input.pressed) this.vy -= GLIDER_THRUST * this.gravityDir * dt;
+        this.vy = Math.max(-GLIDER_MAX_VY, Math.min(GLIDER_MAX_VY, this.vy));
+        this.rotation = (this.vy / GLIDER_MAX_VY) * 0.35;
+        break;
+      }
+      case FORMS.ORB: {
+        this.vy += g * dt;
+        if (input.justPressed) { this.gravityDir *= -1; this.vy = 0; }
+        this.rotation += dt * 6;
+        break;
+      }
+      case FORMS.PULSE: {
+        const dir = input.pressed ? -1 : 1;
+        this.vy = PULSE_DIAG_SPEED * dir * this.gravityDir;
+        this.rotation = Math.atan2(this.vy, this.speed);
+        break;
+      }
+      case FORMS.BOOSTER: {
+        this.vy += g * 0.6 * dt;
+        if (input.justPressed) {
+          this.vy = BOOSTER_BURST_VY * this.gravityDir;
+        }
+        this.rotation = Math.max(-0.3, Math.min(0.3, this.vy / 900));
+        break;
+      }
+    }
+
+    this.y += this.vy * dt;
+
+    // Corridor clamp for flight forms
+    if (this.form === FORMS.GLIDER || this.form === FORMS.PULSE || this.form === FORMS.BOOSTER) {
+      if (this.y - this.halfSize < ceilingY) { this.y = ceilingY + this.halfSize; this.vy = Math.max(this.vy, 0); }
+    }
+
+    this.justLanded = false;
+    // Ground/ceiling snap for runner & orb forms
+    if (this.form === FORMS.RUNNER || this.form === FORMS.ORB) {
+      if (this.gravityDir === 1) {
+        if (this.y + this.halfSize >= groundY) {
+          if (!this.onGround) this.justLanded = true;
+          this.y = groundY - this.halfSize;
+          this.vy = 0;
+          this.onGround = true;
+          if (this.form === FORMS.RUNNER) this.rotation = Math.round(this.rotation / (Math.PI / 2)) * (Math.PI / 2);
+        } else this.onGround = false;
+        if (this.y - this.halfSize < ceilingY) { this.y = ceilingY + this.halfSize; this.vy = Math.max(this.vy, 0); }
+      } else {
+        if (this.y - this.halfSize <= ceilingY) {
+          if (!this.onGround) this.justLanded = true;
+          this.y = ceilingY + this.halfSize;
+          this.vy = 0;
+          this.onGround = true;
+        } else this.onGround = false;
+        if (this.y + this.halfSize > groundY) { this.y = groundY - this.halfSize; this.vy = Math.min(this.vy, 0); }
+      }
+    }
+  }
+
+  getHitbox() {
+    const h = this.halfSize;
+    if (this.form === FORMS.PULSE) {
+      return { x: this.worldX - h * 0.9, y: this.y - h * 0.35, w: h * 1.8, h: h * 0.7 };
+    }
+    return { x: this.worldX - h, y: this.y - h, w: h * 2, h: h * 2 };
+  }
+
+  kill() { this.alive = false; this.deathAt = { x: this.worldX, y: this.y }; }
+}
+
+return { Player, FORMS };
+};
+
+__defs['progression/Cosmetics.js'] = function(__require) {
+// Cosmetic catalog. Everything here is earned with in-game currency only —
+// there is no real-money purchase path anywhere in the game.
+
+const COSMETICS = {
+  shapes: [
+    { id: 'classic', name: 'Classic Square', cost: 0 },
+    { id: 'diamond', name: 'Diamond', cost: 150 },
+    { id: 'hex', name: 'Hexagon', cost: 200 },
+    { id: 'star', name: 'Star Cutter', cost: 300 },
+    { id: 'triforce', name: 'Tri-Blade', cost: 350 },
+    { id: 'ring', name: 'Halo Ring', cost: 450 },
+    { id: 'bolt', name: 'Bolt Fragment', cost: 600 },
+    { id: 'crystal', name: 'Prism Crystal', cost: 800 },
+  ],
+  trails: [
+    { id: 'none', name: 'No Trail', cost: 0 },
+    { id: 'spark', name: 'Spark Trail', cost: 120 },
+    { id: 'ribbon', name: 'Ribbon Trail', cost: 220 },
+    { id: 'pixel', name: 'Pixel Dust', cost: 260 },
+    { id: 'comet', name: 'Comet Tail', cost: 400 },
+    { id: 'double', name: 'Double Helix', cost: 550 },
+  ],
+  colors: [
+    { id: 'neon-cyan', name: 'Neon Cyan', cost: 0, hex: '#37f0ff' },
+    { id: 'ember', name: 'Ember Orange', cost: 100, hex: '#ff7a37' },
+    { id: 'violet', name: 'Violet Surge', cost: 100, hex: '#b03bff' },
+    { id: 'acid', name: 'Acid Green', cost: 150, hex: '#a4ff37' },
+    { id: 'rose', name: 'Rose Static', cost: 150, hex: '#ff37a4' },
+    { id: 'gold', name: 'Solar Gold', cost: 350, hex: '#ffd23b' },
+    { id: 'chrome', name: 'Chrome White', cost: 500, hex: '#f2f6ff' },
+  ],
+  deathEffects: [
+    { id: 'spark', name: 'Spark Burst', cost: 0 },
+    { id: 'shatter', name: 'Shatter', cost: 180 },
+    { id: 'implode', name: 'Implode', cost: 260 },
+    { id: 'confetti', name: 'Confetti Pop', cost: 320 },
+    { id: 'voidburst', name: 'Void Burst', cost: 500 },
+  ],
+  icons: [
+    { id: 'default', name: 'Default Mark', cost: 0 },
+    { id: 'skull', name: 'Skull Mark', cost: 200 },
+    { id: 'wing', name: 'Wing Mark', cost: 250 },
+    { id: 'eye', name: 'Watcher Mark', cost: 400 },
+  ],
+  bgEffects: [
+    { id: 'none', name: 'Plain', cost: 0 },
+    { id: 'grid', name: 'Scanning Grid', cost: 150 },
+    { id: 'rain', name: 'Data Rain', cost: 220 },
+    { id: 'nebula', name: 'Nebula Drift', cost: 400 },
+  ],
+};
+
+const CATEGORY_TO_SAVE_KEY = {
+  shapes: 'unlockedShapes', trails: 'unlockedTrails', colors: 'unlockedColors',
+  deathEffects: 'unlockedDeathEffects', icons: 'unlockedIcons', bgEffects: 'unlockedBgEffects',
+};
+const CATEGORY_TO_EQUIP_KEY = {
+  shapes: 'shape', trails: 'trail', colors: 'color', deathEffects: 'deathEffect', icons: 'icon', bgEffects: 'bgEffect',
+};
+
+function  purchaseCosmetic(save, category, id) {
+  const item = COSMETICS[category]?.find((c) => c.id === id);
+  if (!item) return { ok: false, reason: 'not-found' };
+  const key = CATEGORY_TO_SAVE_KEY[category];
+  if (save.data[key].includes(id)) return { ok: false, reason: 'owned' };
+  if (save.data.currency < item.cost) return { ok: false, reason: 'insufficient-funds' };
+  save.data.currency -= item.cost;
+  save.data[key].push(id);
+  save.save();
+  return { ok: true };
+}
+
+function  equipCosmetic(save, category, id) {
+  const key = CATEGORY_TO_SAVE_KEY[category];
+  if (!save.data[key].includes(id)) return { ok: false, reason: 'not-owned' };
+  save.data.equipped[CATEGORY_TO_EQUIP_KEY[category]] = id;
+  save.save();
+  return { ok: true };
+}
+
+function  getColorHex(save, colorId) {
+  return COSMETICS.colors.find((c) => c.id === colorId)?.hex || '#37f0ff';
+}
+
+return { purchaseCosmetic, equipCosmetic, getColorHex, COSMETICS };
+};
+
+__defs['progression/Progression.js'] = function(__require) {
+// XP/currency economy. Listens to gameplay events on the shared EventBus so
+// it never needs to be imported by LevelRuntime directly.
+
+const { EventBus } = __require('core/Utils.js');
+
+const DIFFICULTY_XP = { 1: 20, 2: 25, 3: 35, 4: 45, 5: 60, 6: 75, 7: 95, 8: 120, 9: 160, 10: 220 };
+const DIFFICULTY_CURRENCY = { 1: 12, 2: 15, 3: 20, 4: 26, 5: 34, 6: 44, 7: 58, 8: 76, 9: 100, 10: 140 };
+
+function  xpForNextLevel(level) { return Math.round(90 * Math.pow(level, 1.35)); }
+
+class Progression {
+  constructor(save) {
+    this.save = save;
+    this._unsubs = [
+      EventBus.on('level:complete', (e) => this.onLevelComplete(e)),
+      EventBus.on('level:coin', (e) => this.onCoin(e)),
+      EventBus.on('daily:complete', (e) => this.onDailyComplete(e)),
+      EventBus.on('achievement:unlocked', (e) => this.onAchievement(e)),
+    ];
+  }
+
+  addXp(amount) {
+    const d = this.save.data;
+    d.xp += amount;
+    let leveled = false;
+    while (d.xp >= xpForNextLevel(d.playerLevel)) {
+      d.xp -= xpForNextLevel(d.playerLevel);
+      d.playerLevel++;
+      leveled = true;
+    }
+    if (leveled) EventBus.emit('progression:level-up', { level: d.playerLevel });
+  }
+
+  addCurrency(amount) { this.save.data.currency += amount; }
+
+  onLevelComplete({ levelId, deaths, practiceMode, difficulty, coinsCollected, totalCoins }) {
+    if (practiceMode) return;
+    const prog = this.save.getLevelProgress(levelId);
+    const firstClear = !prog.completed;
+    let xp = DIFFICULTY_XP[difficulty] || 30;
+    let cur = DIFFICULTY_CURRENCY[difficulty] || 15;
+    if (deaths === 0) { xp += 15; cur += 10; }
+    if (firstClear) { xp += 20; cur += 15; }
+    xp += coinsCollected * 8;
+    cur += coinsCollected * 6;
+    this.addXp(xp);
+    this.addCurrency(cur);
+    this.save.save();
+    EventBus.emit('progression:reward', { xp, currency: cur, levelId });
+  }
+
+  onCoin() { /* per-coin reward is folded into the level-complete payout to avoid farming by dying repeatedly */ }
+
+  onDailyComplete() {
+    this.addXp(60);
+    this.addCurrency(50);
+    this.save.save();
+  }
+
+  onAchievement({ reward }) {
+    if (!reward) return;
+    if (reward.xp) this.addXp(reward.xp);
+    if (reward.currency) this.addCurrency(reward.currency);
+    this.save.save();
+  }
+}
+
+return { xpForNextLevel, Progression };
+};
+
+__defs['render/LevelRenderer.js'] = function(__require) {
+// Draws a live LevelRuntime frame: parallax background, all obstacle types
+// (with neon glow), and the player in its current form/cosmetic loadout.
+
+const { FORMS } = __require('player/Player.js');
+
+function  drawLevel(renderer, level, camX, elapsed) {
+  renderer.drawBackground(level.theme, camX, level.groundY, elapsed);
+  const ctx = renderer.ctx;
+  ctx.save();
+  ctx.translate(-camX, 0);
+
+  for (const s of level.solids) {
+    if (s.type === 'disappearingPlatform' && !s.visible) continue;
+    const color = s.type === 'ground' ? level.theme.ground : level.theme.accent2;
+    renderer.glowRect(s.x, s.y, s.w, s.h, color, s.type === 'ground' ? 6 : 12);
+    if (s.type === 'disappearingPlatform') {
+      ctx.globalAlpha = 0.5;
+      renderer.glowRect(s.x, s.y - 3, s.w, 3, '#fff', 6);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  for (const h of level.hazards) {
+    const color = h.fake ? level.theme.hazard : level.theme.hazard;
+    ctx.globalAlpha = h.fake ? 0.92 : 1;
+    if (h.shape === 'circle') {
+      renderer.glowCircle(h.x, h.y, h.r, color, 14);
+      ctx.save();
+      ctx.translate(h.x, h.y);
+      ctx.rotate(elapsed * 6);
+      ctx.strokeStyle = '#fff8'; ctx.lineWidth = 2;
+      for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.moveTo(0, 0); ctx.rotate(Math.PI / 3); ctx.lineTo(h.r, 0); ctx.stroke(); }
+      ctx.restore();
+    } else {
+      const pts = h.ceiling
+        ? [[h.x, h.y], [h.x + h.w / 2, h.y + h.h], [h.x + h.w, h.y]]
+        : [[h.x, h.y + h.h], [h.x + h.w / 2, h.y], [h.x + h.w, h.y + h.h]];
+      renderer.glowPoly(pts, color, 12);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  for (const p of level.pads) {
+    const color = p.kind === 'pink' ? '#ff37a4' : '#ffd23b';
+    renderer.glowRect(p.x, p.y, p.w, p.h, color, 14);
+  }
+
+  for (const r of level.rings) {
+    renderer.glowCircle(r.x, r.y, r.r, '#37f0ff', 16);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(r.x, r.y, r.r * 0.5, 0, Math.PI * 2); ctx.stroke();
+  }
+
+  for (const p of level.portals) {
+    renderer.glowRect(p.x, p.y, p.w, p.h, '#ff37a4', 18);
+    if (p.label) renderer.text(p.label, p.x + p.w / 2, p.y - 10, { align: 'center', color: '#fff', glow: '#ff37a4', font: '700 12px Orbitron' });
+  }
+
+  for (const c of level.coins) {
+    if (c.collected) continue;
+    ctx.save();
+    ctx.translate(c.x, c.y + Math.sin(elapsed * 4 + c.x * 0.01) * 6);
+    ctx.rotate(elapsed * 2);
+    renderer.glowCircle(0, 0, c.r, c.hard ? '#ff37a4' : '#ffd23b', 16);
+    ctx.restore();
+  }
+
+  if (level.checkpoints) {
+    for (const cx of level.checkpoints) renderer.glowRect(cx - 3, level.groundY - 120, 6, 120, '#37ff8f', 8);
+  }
+
+  if (level.end) renderer.glowRect(level.end.x, level.end.y, level.end.w, level.end.h, '#fff', 20);
+
+  ctx.restore();
+}
+
+function  drawPlayer(renderer, player, colorHex, camX) {
+  const ctx = renderer.ctx;
+  const sx = player.worldX - camX;
+  const sy = player.y;
+  const h = player.halfSize;
+  ctx.save();
+  ctx.translate(sx, sy);
+  ctx.rotate(player.rotation);
+
+  ctx.shadowColor = colorHex;
+  ctx.shadowBlur = 22;
+  ctx.fillStyle = colorHex;
+
+  switch (player.form) {
+    case FORMS.RUNNER:
+      ctx.fillRect(-h, -h, h * 2, h * 2);
+      ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 2; ctx.strokeRect(-h, -h, h * 2, h * 2);
+      break;
+    case FORMS.ORB:
+      ctx.beginPath(); ctx.arc(0, 0, h, 0, Math.PI * 2); ctx.fill();
+      break;
+    case FORMS.GLIDER:
+      ctx.beginPath(); ctx.moveTo(-h, -h * 0.6); ctx.lineTo(h, 0); ctx.lineTo(-h, h * 0.6); ctx.closePath(); ctx.fill();
+      break;
+    case FORMS.PULSE:
+      ctx.beginPath(); ctx.moveTo(-h, 0); ctx.lineTo(0, -h * 0.5); ctx.lineTo(h, 0); ctx.lineTo(0, h * 0.5); ctx.closePath(); ctx.fill();
+      break;
+    case FORMS.BOOSTER:
+      ctx.beginPath(); ctx.ellipse(0, 0, h, h * 0.7, 0, 0, Math.PI * 2); ctx.fill();
+      break;
+  }
+  ctx.restore();
+}
+
+return { drawLevel, drawPlayer };
+};
+
+__defs['render/ParticleSystem.js'] = function(__require) {
+// Lightweight pooled particle system for trails, death bursts and coin pops.
+
+class ParticleSystem {
+  constructor() {
+    this.particles = [];
+    this.enabled = true;
+  }
+
+  burst(x, y, color, count = 18, opts = {}) {
+    if (!this.enabled) return;
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = (opts.speed || 180) * (0.4 + Math.random() * 0.8);
+      this.particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: opts.life || 0.6,
+        age: 0,
+        size: opts.size || 4 + Math.random() * 3,
+        color,
+        gravity: opts.gravity ?? 400,
+      });
+    }
+  }
+
+  trail(x, y, color, size = 3) {
+    if (!this.enabled) return;
+    this.particles.push({ x, y, vx: (Math.random() - 0.5) * 20, vy: (Math.random() - 0.5) * 20, life: 0.4, age: 0, size, color, gravity: 0 });
+  }
+
+  update(dt) {
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      p.age += dt;
+      if (p.age >= p.life) { this.particles.splice(i, 1); continue; }
+      p.vy += p.gravity * dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+    }
+    if (this.particles.length > 800) this.particles.splice(0, this.particles.length - 800);
+  }
+
+  render(ctx, camX) {
+    for (const p of this.particles) {
+      const t = 1 - p.age / p.life;
+      ctx.globalAlpha = Math.max(0, t);
+      ctx.fillStyle = p.color;
+      const s = p.size * t;
+      ctx.beginPath();
+      ctx.arc(p.x - camX, p.y, Math.max(s, 0.5), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  clear() { this.particles.length = 0; }
+}
+
+return { ParticleSystem };
+};
+
+__defs['render/Renderer.js'] = function(__require) {
+// Canvas renderer: parallax backgrounds, glow-heavy neon obstacle drawing,
+// camera/screen shake, and beat-synced background pulsing.
+
+class Renderer {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.width = canvas.width;
+    this.height = canvas.height;
+    this.shake = 0;
+    this.pulse = 0; // 0..1 decays, driven by audio beats
+    this.quality = 'high';
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
+  }
+
+  resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const rect = this.canvas.getBoundingClientRect();
+    this.width = rect.width;
+    this.height = rect.height;
+    this.canvas.width = Math.floor(rect.width * dpr);
+    this.canvas.height = Math.floor(rect.height * dpr);
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  addShake(amount) { this.shake = Math.min(this.shake + amount, 24); }
+  addPulse(amount = 1) { this.pulse = Math.min(1, this.pulse + amount); }
+
+  beginFrame(dt) {
+    this.shake *= Math.max(0, 1 - dt * 6);
+    this.pulse *= Math.max(0, 1 - dt * 4);
+    const ctx = this.ctx;
+    ctx.save();
+    if (this.shake > 0.3) {
+      const sx = (Math.random() - 0.5) * this.shake;
+      const sy = (Math.random() - 0.5) * this.shake;
+      ctx.translate(sx, sy);
+    }
+  }
+
+  endFrame() { this.ctx.restore(); }
+
+  clear() {
+    this.ctx.clearRect(-40, -40, this.width + 80, this.height + 80);
+  }
+
+  drawBackground(theme, camX, groundY, time) {
+    const ctx = this.ctx;
+    const grad = ctx.createLinearGradient(0, 0, 0, this.height);
+    grad.addColorStop(0, theme.bg2);
+    grad.addColorStop(1, theme.bg1);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, this.width, this.height);
+
+    // Pulsating glow overlay synced to music beats
+    if (this.pulse > 0.01) {
+      ctx.fillStyle = theme.accent;
+      ctx.globalAlpha = this.pulse * 0.08;
+      ctx.fillRect(0, 0, this.width, this.height);
+      ctx.globalAlpha = 1;
+    }
+
+    // Parallax layers: far shapes drift slowly, near stripes drift faster
+    this._drawParallaxLayer(camX * 0.15, theme.accent2, 0.05, 60, groundY, time, 40);
+    this._drawParallaxLayer(camX * 0.35, theme.accent, 0.08, 34, groundY, time, 90);
+    this._drawGroundGlow(theme, groundY);
+  }
+
+  _drawParallaxLayer(offset, color, alpha, size, groundY, time, spacing) {
+    const ctx = this.ctx;
+    ctx.fillStyle = color;
+    ctx.globalAlpha = alpha;
+    const start = Math.floor(-offset / spacing) * spacing;
+    for (let x = start; x < start + this.width + spacing * 2; x += spacing) {
+      const sx = x + offset;
+      const bob = Math.sin((x * 0.01) + time * 0.6) * 14;
+      ctx.beginPath();
+      ctx.arc((sx % (this.width + spacing * 4)) - offset % spacing, groundY - 120 - bob - (size % 200), size * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  _drawGroundGlow(theme, groundY) {
+    const ctx = this.ctx;
+    const grad = ctx.createLinearGradient(0, groundY - 40, 0, groundY + 6);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(1, theme.accent);
+    ctx.globalAlpha = 0.25;
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, groundY - 40, this.width, 46);
+    ctx.globalAlpha = 1;
+  }
+
+  glowRect(x, y, w, h, color, glow = 14) {
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.shadowColor = color;
+    ctx.shadowBlur = glow;
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, w, h);
+    ctx.restore();
+  }
+
+  glowPoly(points, color, glow = 14, fill = true) {
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.shadowColor = color;
+    ctx.shadowBlur = glow;
+    ctx.beginPath();
+    points.forEach(([px, py], i) => (i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py)));
+    ctx.closePath();
+    if (fill) { ctx.fillStyle = color; ctx.fill(); }
+    else { ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.stroke(); }
+    ctx.restore();
+  }
+
+  glowCircle(x, y, r, color, glow = 14) {
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.shadowColor = color;
+    ctx.shadowBlur = glow;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  text(str, x, y, opts = {}) {
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.font = opts.font || '16px "Segoe UI", sans-serif';
+    ctx.fillStyle = opts.color || '#fff';
+    ctx.textAlign = opts.align || 'left';
+    ctx.textBaseline = opts.baseline || 'alphabetic';
+    if (opts.glow) { ctx.shadowColor = opts.glow; ctx.shadowBlur = 10; }
+    ctx.fillText(str, x, y);
+    ctx.restore();
+  }
+}
+
+return { Renderer };
+};
+
+__defs['stats/Statistics.js'] = function(__require) {
+// Passive listener that keeps save.data.stats up to date from gameplay
+// events. Nothing here computes rewards — that's Progression's job.
+
+const { EventBus } = __require('core/Utils.js');
+const { getLevelMeta } = __require('levels/levelList.js');
+
+const CATEGORY_RANK = { Easy: 1, Normal: 2, Hard: 3, Insane: 4, Demon: 5 };
+
+class Statistics {
+  constructor(save) {
+    this.save = save;
+    this._playtimeAccum = 0;
+    this._unsubs = [
+      EventBus.on('level:attempt-start', () => this._bump('totalAttempts')),
+      EventBus.on('level:death', () => this._bump('totalDeaths')),
+      EventBus.on('level:jump', () => this._bump('totalJumps')),
+      EventBus.on('level:coin', () => this._bump('coinsCollected')),
+      EventBus.on('level:complete', (e) => this._onComplete(e)),
+      EventBus.on('practice:session', () => this._bump('practiceSessions')),
+    ];
+  }
+
+  _bump(key, by = 1) { this.save.data.stats[key] = (this.save.data.stats[key] || 0) + by; this.save.save(); }
+
+  tick(dt, distanceThisFrame) {
+    this._playtimeAccum += dt;
+    this.save.data.stats.totalDistance += distanceThisFrame;
+    if (this._playtimeAccum > 1) {
+      this.save.data.stats.totalPlaytimeMs += Math.floor(this._playtimeAccum * 1000);
+      this._playtimeAccum = 0;
+      this.save.save();
+    }
+  }
+
+  _onComplete({ levelId, practiceMode }) {
+    if (practiceMode) return;
+    const s = this.save.data.stats;
+    s.levelsCompleted++;
+    const meta = getLevelMeta(levelId);
+    if (meta) {
+      const rank = CATEGORY_RANK[meta.category];
+      const curRank = s.hardestLevelCompleted ? CATEGORY_RANK[getLevelMeta(s.hardestLevelCompleted)?.category] || 0 : 0;
+      if (rank > curRank || (rank === curRank && meta.difficulty > (getLevelMeta(s.hardestLevelCompleted)?.difficulty || 0))) {
+        s.hardestLevelCompleted = levelId;
+      }
+      if (!s.bestLevelId) s.bestLevelId = levelId;
+    }
+    this.save.save();
+  }
+}
+
+return { Statistics };
+};
+
+__defs['ui/UIManager.js'] = function(__require) {
+// Central screen router. Each screen module exports render(root, game) and
+// returns nothing — screens fully own their DOM subtree under #ui-root and
+// re-render themselves as needed via game.ui.refresh().
+
+const { clear } = __require('ui/dom.js');
+const { renderMainMenu } = __require('ui/screens/MainMenu.js');
+const { renderLevelSelect } = __require('ui/screens/LevelSelect.js');
+const { renderShop } = __require('ui/screens/Shop.js');
+const { renderSettings } = __require('ui/screens/Settings.js');
+const { renderAchievements } = __require('ui/screens/Achievements.js');
+const { renderStatistics } = __require('ui/screens/Statistics.js');
+const { renderDailyChallenge } = __require('ui/screens/DailyChallenge.js');
+const { renderPracticeSetup } = __require('ui/screens/PracticePanel.js');
+
+const SCREENS = {
+  mainMenu: renderMainMenu,
+  levelSelect: renderLevelSelect,
+  shop: renderShop,
+  settings: renderSettings,
+  achievements: renderAchievements,
+  statistics: renderStatistics,
+  daily: renderDailyChallenge,
+  practiceSetup: renderPracticeSetup,
+};
+
+class UIManager {
+  constructor(root, game) {
+    this.root = root;
+    this.game = game;
+    this.current = null;
+    this.params = null;
+  }
+
+  showScreen(name, params = {}) {
+    this.current = name;
+    this.params = params;
+    this.refresh();
+  }
+
+  hide() {
+    this.current = null;
+    clear(this.root);
+  }
+
+  refresh() {
+    clear(this.root);
+    if (!this.current) return;
+    const fn = SCREENS[this.current];
+    if (!fn) { console.warn('Unknown screen', this.current); return; }
+    fn(this.root, this.game, this.params);
+  }
+
+  toast(message) {
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = message;
+    document.getElementById('app').appendChild(t);
+    setTimeout(() => t.remove(), 2200);
+  }
+}
+
+return { UIManager };
+};
+
+__defs['ui/dom.js'] = function(__require) {
+// Tiny DOM-building helper shared by every screen — keeps screen files
+// declarative without pulling in a framework.
+
+function  el(tag, props = {}, children = []) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === 'class') node.className = v;
+    else if (k === 'text') node.textContent = v;
+    else if (k === 'html') node.innerHTML = v;
+    else if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2).toLowerCase(), v);
+    else if (v !== undefined && v !== null && v !== false) node.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of [].concat(children)) {
+    if (c === null || c === undefined) continue;
+    node.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  }
+  return node;
+}
+
+function  clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+
+function  fmtTime(ms) {
+  if (ms === null || ms === undefined) return '--:--.--';
+  const totalMs = Math.max(0, ms);
+  const m = Math.floor(totalMs / 60000);
+  const s = Math.floor((totalMs % 60000) / 1000);
+  const cs = Math.floor((totalMs % 1000) / 10);
+  return `${m}:${String(s).padStart(2, '0')}.${String(cs).padStart(2, '0')}`;
+}
+
+function  fmtDuration(ms) {
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
+return { el, clear, fmtTime, fmtDuration };
+};
+
+__defs['ui/screens/Achievements.js'] = function(__require) {
+const { el } = __require('ui/dom.js');
+const { ACHIEVEMENT_LIST } = __require('achievements/Achievements.js');
+
+function  renderAchievements(root, game) {
+  const screen = el('div', { class: 'screen' });
+  screen.appendChild(el('button', { class: 'btn small close-x interactive', onClick: () => game.ui.showScreen('mainMenu') }, ['✕ Back']));
+  const unlockedCount = ACHIEVEMENT_LIST.filter((a) => game.save.data.achievements[a.id]?.unlocked).length;
+  screen.appendChild(el('h2', { class: 'title-font' }, [`Achievements (${unlockedCount}/${ACHIEVEMENT_LIST.length})`]));
+
+  const list = el('div', { class: 'ach-list' });
+  for (const a of ACHIEVEMENT_LIST) {
+    const rec = game.save.data.achievements[a.id];
+    const unlocked = !!rec?.unlocked;
+    list.appendChild(el('div', { class: `ach-item${unlocked ? '' : ' locked'}` }, [
+      el('div', {}, [
+        el('div', { style: 'font-weight:700;' }, [unlocked ? '🏆 ' + a.name : '🔒 ' + a.name]),
+        el('div', { class: 'small-text' }, [a.desc]),
+      ]),
+      el('div', { class: 'small-text', style: 'text-align:right; white-space:nowrap;' }, [
+        a.reward.xp ? `${a.reward.xp} XP` : '', a.reward.currency ? ` ◆${a.reward.currency}` : '',
+      ]),
+    ]));
+  }
+  screen.appendChild(list);
+  root.appendChild(screen);
+}
+
+return { renderAchievements };
+};
+
+__defs['ui/screens/DailyChallenge.js'] = function(__require) {
+const { el } = __require('ui/dom.js');
+const { todayKey } = __require('levels/daily.js');
+
+function  renderDailyChallenge(root, game) {
+  const dc = game.save.data.dailyChallenge;
+  const today = todayKey();
+  const doneToday = dc.lastCompletedDate === today;
+  const screen = el('div', { class: 'screen' });
+  screen.appendChild(el('button', { class: 'btn small close-x interactive', onClick: () => game.ui.showScreen('mainMenu') }, ['✕ Back']));
+  screen.appendChild(el('h2', { class: 'title-font' }, ['Daily Challenge']));
+  screen.appendChild(el('div', { class: 'panel', style: 'text-align:center; width:min(420px,90vw);' }, [
+    el('div', { style: 'font-size:2rem;' }, ['★']),
+    el('div', { style: 'margin: 10px 0;' }, [`Streak: ${dc.streak} day${dc.streak === 1 ? '' : 's'}`]),
+    el('div', { class: 'small-text', style: 'margin-bottom:16px;' }, [
+      doneToday ? "You've already conquered today's run. Come back tomorrow!" : 'A fresh, unique level generated just for today. Beat it to extend your streak.',
+    ]),
+    el('button', { class: `btn interactive${doneToday ? '' : ' primary'}`, disabled: doneToday, onClick: () => game.startDaily() }, [doneToday ? 'Completed Today' : 'Start Daily Run']),
+  ]));
+  root.appendChild(screen);
+}
+
+return { renderDailyChallenge };
+};
+
+__defs['ui/screens/HUD.js'] = function(__require) {
+const { el, clear, fmtTime } = __require('ui/dom.js');
+
+// The live HUD is rebuilt once per level (not per frame) and then patched
+// cheaply every frame via update() to avoid DOM-churn during gameplay.
+class HUD {
+  constructor(hudRoot, game) {
+    this.hudRoot = hudRoot;
+    this.game = game;
+    this.els = {};
+  }
+
+  mount(runtime) {
+    clear(this.hudRoot);
+    const track = el('div', { class: 'progress-track' }, [el('div', { class: 'progress-fill' })]);
+    const attempt = el('div', { class: 'attempt-badge' }, [`Attempt ${runtime.attempts}`]);
+    const coinHud = el('div', { class: 'coin-hud' }, runtime.level.coins.map(() => el('div', { class: 'pip' })));
+    const pauseBtn = el('button', {
+      class: 'btn small interactive', style: 'position:absolute; top:34px; left:14px; pointer-events:auto;',
+      onClick: () => this.game.togglePause(),
+    }, ['❚❚']);
+
+    this.hudRoot.appendChild(track);
+    this.hudRoot.appendChild(attempt);
+    this.hudRoot.appendChild(coinHud);
+    this.hudRoot.appendChild(pauseBtn);
+
+    if (runtime.practiceMode) {
+      const badge = el('div', { class: 'practice-badge' }, ['PRACTICE MODE']);
+      this.hudRoot.appendChild(badge);
+      this.hudRoot.appendChild(this._practiceControls(runtime));
+    }
+
+    this.els = { fill: track.firstChild, attempt, coinPips: [...coinHud.children] };
+  }
+
+  _practiceControls(runtime) {
+    const wrap = el('div', {
+      class: 'row interactive', style: 'position:absolute; bottom:14px; left:50%; transform:translateX(-50%); gap:6px; pointer-events:auto;',
+    });
+    wrap.appendChild(el('button', { class: 'btn small', onClick: () => runtime.addCheckpoint() }, ['+ Checkpoint']));
+    wrap.appendChild(el('button', { class: 'btn small', onClick: () => { runtime.clearCheckpoints(); this.game.ui.toast('Checkpoints cleared'); } }, ['Clear']));
+    const cpToggle = el('button', {
+      class: 'btn small', onClick: (e) => { runtime.checkpointsEnabled = !runtime.checkpointsEnabled; e.target.textContent = `Checkpoints: ${runtime.checkpointsEnabled ? 'On' : 'Off'}`; },
+    }, ['Checkpoints: On']);
+    wrap.appendChild(cpToggle);
+    const speedBtn = el('button', { class: 'btn small' }, ['Speed: 1x']);
+    const speeds = [1, 0.75, 0.5];
+    let speedIdx = 0;
+    speedBtn.addEventListener('click', () => {
+      speedIdx = (speedIdx + 1) % speeds.length;
+      runtime.setSpeedScale(speeds[speedIdx]);
+      speedBtn.textContent = `Speed: ${speeds[speedIdx]}x`;
+    });
+    wrap.appendChild(speedBtn);
+    wrap.appendChild(el('button', { class: 'btn small danger', onClick: () => this.game.exitToMenu() }, ['Exit']));
+    return wrap;
+  }
+
+  update(runtime) {
+    if (!this.els.fill) return;
+    this.els.fill.style.width = `${runtime.percent}%`;
+    this.els.attempt.textContent = `Attempt ${runtime.attempts}`;
+    runtime.level.coins.forEach((c, i) => {
+      const pip = this.els.coinPips[i];
+      if (pip) pip.classList.toggle('on', !!c.collected);
+    });
+  }
+
+  unmount() { clear(this.hudRoot); this.els = {}; }
+}
+
+function  buildPauseOverlay(game, runtime) {
+  const wrap = el('div', { class: 'overlay-center interactive' });
+  wrap.appendChild(el('div', { class: 'panel', style: 'text-align:center;' }, [
+    el('h2', { class: 'title-font' }, ['Paused']),
+    el('div', { class: 'menu-list' }, [
+      el('button', { class: 'btn primary interactive', onClick: () => game.togglePause() }, ['Resume']),
+      el('button', { class: 'btn interactive', onClick: () => game.restartLevel() }, ['Restart']),
+      el('button', { class: 'btn interactive', onClick: () => game.exitToMenu() }, ['Exit to Menu']),
+    ]),
+  ]));
+  return wrap;
+}
+
+function  buildCompleteOverlay(game, payload) {
+  const wrap = el('div', { class: 'overlay-center interactive' });
+  const meta = game.currentMeta;
+  const isEditorTest = typeof game.currentLevelId === 'string' && game.currentLevelId.startsWith('custom_');
+  wrap.appendChild(el('div', { class: 'panel', style: 'text-align:center; min-width:300px;' }, [
+    el('h2', { class: 'title-font', style: 'color:var(--accent);' }, ['Level Complete!']),
+    el('div', { style: 'margin: 8px 0;' }, [meta?.name || payload.levelId]),
+    el('div', { class: 'row', style: 'justify-content:center; gap:18px; margin:14px 0;' }, [
+      stat('Time', fmtTime(payload.timeMs)),
+      stat('Deaths', payload.deaths),
+      stat('Coins', `${payload.coinsCollected}/${payload.totalCoins}`),
+    ]),
+    payload.reward ? el('div', { class: 'small-text', style: 'margin-bottom:12px;' }, [`+${payload.reward.xp} XP  ·  +◆${payload.reward.currency}`]) : null,
+    el('div', { class: 'menu-list' }, isEditorTest ? [
+      el('button', { class: 'btn primary interactive', onClick: () => game.returnToEditorFromTest() }, ['Back to Editor']),
+    ] : [
+      game.hasNextLevel() ? el('button', { class: 'btn primary interactive', onClick: () => game.startLevel(game.nextLevelId()) }, ['Next Level']) : null,
+      el('button', { class: 'btn interactive', onClick: () => game.restartLevel() }, ['Retry']),
+      el('button', { class: 'btn interactive', onClick: () => game.ui.showScreen('levelSelect') }, ['Level Select']),
+      el('button', { class: 'btn interactive', onClick: () => game.exitToMenu() }, ['Main Menu']),
+    ].filter(Boolean)),
+  ]));
+  return wrap;
+}
+
+function stat(label, value) {
+  return el('div', { style: 'text-align:center;' }, [
+    el('div', { style: 'font-family:Orbitron; font-size:1.2rem;' }, [String(value)]),
+    el('div', { class: 'small-text' }, [label]),
+  ]);
+}
+
+return { buildPauseOverlay, buildCompleteOverlay, HUD };
+};
+
+__defs['ui/screens/LevelSelect.js'] = function(__require) {
+const { el, clear, fmtTime } = __require('ui/dom.js');
+const { LEVEL_META, CATEGORIES } = __require('levels/levelList.js');
+
+let activeFilter = 'All';
+let sortMode = 'id';
+
+function  renderLevelSelect(root, game) {
+  const screen = el('div', { class: 'screen' });
+  screen.appendChild(el('button', { class: 'btn small close-x interactive', onClick: () => game.ui.showScreen('mainMenu') }, ['✕ Back']));
+  screen.appendChild(el('h2', { class: 'title-font' }, ['Level Select']));
+
+  const filterBar = el('div', { class: 'filter-bar' });
+  const cats = ['All', ...CATEGORIES];
+  for (const c of cats) {
+    filterBar.appendChild(el('div', {
+      class: `chip interactive${activeFilter === c ? ' active' : ''}`,
+      onClick: () => { activeFilter = c; game.ui.refresh(); },
+    }, [c]));
+  }
+  const sortChip = el('div', {
+    class: 'chip interactive',
+    onClick: () => { sortMode = sortMode === 'id' ? 'progress' : 'id'; game.ui.refresh(); },
+  }, [sortMode === 'id' ? 'Sort: Level #' : 'Sort: Progress']);
+  filterBar.appendChild(sortChip);
+  screen.appendChild(filterBar);
+
+  const grid = el('div', { class: 'level-grid' });
+  let levels = activeFilter === 'All' ? LEVEL_META : LEVEL_META.filter((l) => l.category === activeFilter);
+  levels = [...levels];
+  if (sortMode === 'progress') levels.sort((a, b) => (game.save.getLevelProgress(b.id).bestPercent) - (game.save.getLevelProgress(a.id).bestPercent));
+  else levels.sort((a, b) => a.id - b.id);
+
+  for (const meta of levels) grid.appendChild(levelCard(meta, game));
+  screen.appendChild(grid);
+  root.appendChild(screen);
+}
+
+function levelCard(meta, game) {
+  const prog = game.save.getLevelProgress(meta.id);
+  const stars = '★'.repeat(meta.difficulty) + '☆'.repeat(10 - meta.difficulty);
+  const card = el('div', {
+    class: 'level-card interactive',
+    style: `border-left: 4px solid ${meta.theme.accent}`,
+    onClick: () => game.startLevel(meta.id),
+  }, [
+    el('div', { class: 'lname' }, [`${meta.id}. ${meta.name}`]),
+    el('div', { class: 'small-text' }, [meta.category]),
+    el('div', { class: 'stars', style: 'font-size:0.7rem;' }, [stars.slice(0, 10)]),
+    el('div', { class: 'row', style: 'margin-top:6px;' }, coinPips(prog.coins)),
+    el('div', { class: 'progress-bar' }, [el('div', { style: `width:${prog.bestPercent}%` })]),
+    el('div', { class: 'lmeta' }, [
+      el('span', {}, [`Best: ${Math.floor(prog.bestPercent)}%`]),
+      el('span', {}, [prog.completed ? `✓ ${fmtTime(prog.bestTimeMs)}` : `${prog.attempts} tries`]),
+    ]),
+  ]);
+  return card;
+}
+
+function coinPips(coins) {
+  return coins.map((on) => el('span', { style: `color:${on ? '#ffd23b' : 'rgba(255,255,255,0.15)'}; margin-right:3px;` }, ['●']));
+}
+
+return { renderLevelSelect };
+};
+
+__defs['ui/screens/MainMenu.js'] = function(__require) {
+const { el } = __require('ui/dom.js');
+
+function  renderMainMenu(root, game) {
+  const d = game.save.data;
+  root.appendChild(el('div', { class: 'screen' }, [
+    el('div', { class: 'topbar' }, [
+      el('div', { class: 'row' }, [
+        el('div', { class: 'currency-badge' }, [`◆ ${d.currency}`]),
+        el('div', { class: 'xp-badge' }, [`LV ${d.playerLevel} · ${d.xp}/${xpNeeded(d.playerLevel)} XP`]),
+      ]),
+    ]),
+    el('h1', { class: 'game-title' }, ['PRISM RUSH']),
+    el('div', { class: 'subtitle' }, ['an original rhythm platformer']),
+    el('div', { class: 'menu-list' }, [
+      btn('▶  Play', 'primary', () => game.startNextIncomplete()),
+      btn('☰  Level Select', null, () => game.ui.showScreen('levelSelect')),
+      btn('⏱  Practice Mode', null, () => game.ui.showScreen('practiceSetup')),
+      btn('★  Daily Challenge', null, () => game.ui.showScreen('daily')),
+      btn('✎  Editor', null, () => game.openEditor()),
+      btn('◆  Shop', null, () => game.ui.showScreen('shop')),
+      btn('⚙  Settings', null, () => game.ui.showScreen('settings')),
+      btn('🏆  Achievements', null, () => game.ui.showScreen('achievements')),
+      btn('▤  Statistics', null, () => game.ui.showScreen('statistics')),
+    ]),
+    el('div', { class: 'hint' }, ['Tap / Click / Space to jump · Esc to pause']),
+  ]));
+}
+
+function xpNeeded(level) { return Math.round(90 * Math.pow(level, 1.35)); }
+
+function btn(label, variant, onClick) {
+  return el('button', { class: `btn interactive${variant ? ' ' + variant : ''}`, onClick: () => { onClick(); } }, [label]);
+}
+
+return { renderMainMenu };
+};
+
+__defs['ui/screens/PracticePanel.js'] = function(__require) {
+const { el } = __require('ui/dom.js');
+const { LEVEL_META } = __require('levels/levelList.js');
+
+function  renderPracticeSetup(root, game) {
+  const screen = el('div', { class: 'screen' });
+  screen.appendChild(el('button', { class: 'btn small close-x interactive', onClick: () => game.ui.showScreen('mainMenu') }, ['✕ Back']));
+  screen.appendChild(el('h2', { class: 'title-font' }, ['Practice Mode']));
+  screen.appendChild(el('div', { class: 'hint', style: 'max-width:520px; text-align:center;' }, [
+    'Place checkpoints, slow the game down, and drill tricky sections. Practice runs never count toward level completion or best times.',
+  ]));
+
+  const grid = el('div', { class: 'level-grid' });
+  for (const meta of LEVEL_META) {
+    grid.appendChild(el('div', {
+      class: 'level-card interactive', style: `border-left:4px solid ${meta.theme.accent}`,
+      onClick: () => game.startLevel(meta.id, { practice: true }),
+    }, [
+      el('div', { class: 'lname' }, [`${meta.id}. ${meta.name}`]),
+      el('div', { class: 'small-text' }, [`${meta.category} · ${'★'.repeat(Math.min(meta.difficulty, 10))}`]),
+    ]));
+  }
+  screen.appendChild(grid);
+  root.appendChild(screen);
+}
+
+return { renderPracticeSetup };
+};
+
+__defs['ui/screens/Settings.js'] = function(__require) {
+const { el } = __require('ui/dom.js');
+
+function  renderSettings(root, game) {
+  const s = game.save.data.settings;
+  const screen = el('div', { class: 'screen' });
+  screen.appendChild(el('button', { class: 'btn small close-x interactive', onClick: () => game.ui.showScreen('mainMenu') }, ['✕ Back']));
+  screen.appendChild(el('h2', { class: 'title-font' }, ['Settings']));
+
+  const panel = el('div', { class: 'panel', style: 'width:min(440px,90vw);' });
+
+  panel.appendChild(slider('Music Volume', s.musicVolume, (v) => { s.musicVolume = v; game.audio.applyVolumes(); game.save.save(); }));
+  panel.appendChild(slider('SFX Volume', s.sfxVolume, (v) => { s.sfxVolume = v; game.audio.applyVolumes(); game.save.save(); }));
+
+  panel.appendChild(select('Graphics Quality', ['low', 'medium', 'high'], s.graphicsQuality, (v) => { s.graphicsQuality = v; game.save.save(); game.renderer.quality = v; }));
+
+  panel.appendChild(toggle('Screen Shake', s.screenShake, (v) => { s.screenShake = v; game.save.save(); }));
+  panel.appendChild(toggle('Particle Effects', s.particles, (v) => { s.particles = v; game.particles.enabled = v; game.save.save(); }));
+  panel.appendChild(toggle('Reduce Flash', s.reduceFlash, (v) => { s.reduceFlash = v; game.save.save(); }));
+  panel.appendChild(toggle('Colorblind-friendly Palette', s.colorblindMode, (v) => { s.colorblindMode = v; game.save.save(); }));
+  panel.appendChild(toggle('Fullscreen', s.fullscreen, (v) => {
+    s.fullscreen = v; game.save.save();
+    if (v) document.documentElement.requestFullscreen?.().catch(() => {});
+    else document.exitFullscreen?.().catch(() => {});
+  }));
+
+  panel.appendChild(el('div', { class: 'field', style: 'margin-top:10px;' }, [
+    el('div', { class: 'small-text', style: 'margin-bottom:6px;' }, ['Keybinds']),
+    el('div', { class: 'row between' }, [el('span', {}, ['Jump / Fly / Flip']), el('span', {}, [s.keybinds.jump])]),
+    el('div', { class: 'row between' }, [el('span', {}, ['Pause']), el('span', {}, [s.keybinds.pause])]),
+    el('div', { class: 'hint' }, ['Click gameplay or press Space to jump. Rebinding UI coming soon — Space/Click/Tap always work.']),
+  ]));
+
+  panel.appendChild(el('button', { class: 'btn danger interactive', style: 'margin-top:14px;', onClick: () => {
+    if (confirm('Reset ALL progress? This cannot be undone.')) { game.save.reset(); game.ui.refresh(); }
+  } }, ['Reset Save Data']));
+
+  screen.appendChild(panel);
+  root.appendChild(screen);
+}
+
+function slider(label, value, onChange) {
+  const wrap = el('label', { class: 'field' }, [`${label}: ${Math.round(value * 100)}%`]);
+  const input = el('input', { type: 'range', min: '0', max: '1', step: '0.01', value, class: 'interactive' });
+  input.addEventListener('input', (e) => {
+    onChange(parseFloat(e.target.value));
+    wrap.firstChild.textContent = `${label}: ${Math.round(parseFloat(e.target.value) * 100)}%`;
+  });
+  wrap.appendChild(input);
+  return wrap;
+}
+
+function toggle(label, value, onChange) {
+  const wrap = el('label', { class: 'field row between' }, [label]);
+  const input = el('input', { type: 'checkbox', class: 'interactive' });
+  input.checked = value;
+  input.addEventListener('change', (e) => onChange(e.target.checked));
+  wrap.appendChild(input);
+  return wrap;
+}
+
+function select(label, options, value, onChange) {
+  const wrap = el('label', { class: 'field' }, [label]);
+  const sel = el('select', { class: 'interactive' });
+  for (const o of options) sel.appendChild(el('option', { value: o, selected: o === value }, [o]));
+  sel.addEventListener('change', (e) => onChange(e.target.value));
+  wrap.appendChild(sel);
+  return wrap;
+}
+
+return { renderSettings };
+};
+
+__defs['ui/screens/Shop.js'] = function(__require) {
+const { el } = __require('ui/dom.js');
+const { COSMETICS, purchaseCosmetic, equipCosmetic } = __require('progression/Cosmetics.js');
+const { EventBus } = __require('core/Utils.js');
+
+let activeTab = 'shapes';
+const TAB_LABELS = { shapes: 'Shapes', trails: 'Trails', colors: 'Colors', deathEffects: 'Death FX', icons: 'Icons', bgEffects: 'Backgrounds' };
+const SAVE_KEY = { shapes: 'unlockedShapes', trails: 'unlockedTrails', colors: 'unlockedColors', deathEffects: 'unlockedDeathEffects', icons: 'unlockedIcons', bgEffects: 'unlockedBgEffects' };
+const EQUIP_KEY = { shapes: 'shape', trails: 'trail', colors: 'color', deathEffects: 'deathEffect', icons: 'icon', bgEffects: 'bgEffect' };
+
+function  renderShop(root, game) {
+  const d = game.save.data;
+  const screen = el('div', { class: 'screen' });
+  screen.appendChild(el('button', { class: 'btn small close-x interactive', onClick: () => game.ui.showScreen('mainMenu') }, ['✕ Back']));
+  screen.appendChild(el('h2', { class: 'title-font' }, ['Shop']));
+  screen.appendChild(el('div', { class: 'currency-badge', style: 'margin-bottom:16px;' }, [`◆ ${d.currency}`]));
+
+  const tabs = el('div', { class: 'tabs' });
+  for (const key of Object.keys(TAB_LABELS)) {
+    tabs.appendChild(el('div', { class: `chip interactive${activeTab === key ? ' active' : ''}`, onClick: () => { activeTab = key; game.ui.refresh(); } }, [TAB_LABELS[key]]));
+  }
+  screen.appendChild(tabs);
+
+  const grid = el('div', { class: 'cosmetic-grid' });
+  const owned = d[SAVE_KEY[activeTab]];
+  const equipped = d.equipped[EQUIP_KEY[activeTab]];
+  for (const item of COSMETICS[activeTab]) {
+    const isOwned = owned.includes(item.id);
+    const isEquipped = equipped === item.id;
+    const swatchColor = item.hex || '#6a4dff';
+    grid.appendChild(el('div', { class: `cosmetic-card${isEquipped ? ' equipped' : ''}` }, [
+      el('div', { class: 'swatch', style: `background:${swatchColor}; box-shadow: inset 0 0 20px rgba(0,0,0,0.4), 0 0 12px ${swatchColor}55;` }),
+      el('div', { style: 'font-size:0.8rem; font-weight:700; margin-bottom:6px;' }, [item.name]),
+      isOwned
+        ? el('button', {
+          class: `btn small interactive${isEquipped ? '' : ' primary'}`, disabled: isEquipped,
+          onClick: () => { equipCosmetic(game.save, activeTab, item.id); game.ui.refresh(); },
+        }, [isEquipped ? 'Equipped' : 'Equip'])
+        : el('button', {
+          class: 'btn small interactive', disabled: d.currency < item.cost,
+          onClick: () => {
+            const res = purchaseCosmetic(game.save, activeTab, item.id);
+            if (res.ok) { EventBus.emit('shop:purchase', item); game.ui.toast(`Unlocked ${item.name}!`); }
+            game.ui.refresh();
+          },
+        }, [item.cost === 0 ? 'Free' : `◆ ${item.cost}`]),
+    ]));
+  }
+  screen.appendChild(grid);
+  root.appendChild(screen);
+}
+
+return { renderShop };
+};
+
+__defs['ui/screens/Statistics.js'] = function(__require) {
+const { el, fmtDuration } = __require('ui/dom.js');
+const { getLevelMeta } = __require('levels/levelList.js');
+
+function  renderStatistics(root, game) {
+  const s = game.save.data.stats;
+  const screen = el('div', { class: 'screen' });
+  screen.appendChild(el('button', { class: 'btn small close-x interactive', onClick: () => game.ui.showScreen('mainMenu') }, ['✕ Back']));
+  screen.appendChild(el('h2', { class: 'title-font' }, ['Statistics']));
+
+  const rows = [
+    ['Total Attempts', s.totalAttempts],
+    ['Total Deaths', s.totalDeaths],
+    ['Levels Completed', `${s.levelsCompleted} / 50`],
+    ['Coins Collected', s.coinsCollected],
+    ['Total Playtime', fmtDuration(s.totalPlaytimeMs)],
+    ['Total Jumps', s.totalJumps],
+    ['Total Distance', `${Math.floor(s.totalDistance).toLocaleString()} units`],
+    ['Best Level', s.bestLevelId ? getLevelMeta(s.bestLevelId)?.name : '—'],
+    ['Hardest Level Completed', s.hardestLevelCompleted ? `${getLevelMeta(s.hardestLevelCompleted)?.name} (${getLevelMeta(s.hardestLevelCompleted)?.category})` : '—'],
+    ['Practice Sessions', s.practiceSessions],
+    ['Player Level', game.save.data.playerLevel],
+    ['Currency Earned', game.save.data.currency],
+  ];
+  const list = el('div', { class: 'stat-list panel' });
+  for (const [label, value] of rows) list.appendChild(el('div', { class: 'stat-row' }, [el('span', {}, [label]), el('span', { style: 'font-weight:700;' }, [String(value)])]));
+  screen.appendChild(list);
+  root.appendChild(screen);
+}
+
+return { renderStatistics };
+};
+
+__require('main.js');
+
+</script>
+</body>
+</html>
