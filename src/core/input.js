@@ -14,6 +14,10 @@ export class InputManager {
     this.shotType = 'wrist';
     this.enabled = false;
     this.invertY = false;
+    // True when style.css's forced-landscape rotation is active (portrait
+    // phone, content rotated 90deg via CSS). Real pointer coordinates then
+    // need to be rotated back into the game's own coordinate frame.
+    this.rotatedLandscape = false;
     this.gamepadIndex = null;
     this._keyDeke = 0;
 
@@ -38,10 +42,26 @@ export class InputManager {
 
   setEnabled(v) { this.enabled = v; if (!v) { this.charging = false; } }
 
-  _updateAimFromClient(clientX, clientY) {
+  // Converts real screen-space clientX/clientY into the game's own axes,
+  // accounting for the CSS rotate(-90deg) forced-landscape mode (see
+  // style.css). Inverse of that transform: game_x = innerHeight - clientY,
+  // game_y = clientX.
+  _toGameSpace(clientX, clientY) {
+    if (this.rotatedLandscape) {
+      const gameW = window.innerHeight;
+      const gameH = window.innerWidth;
+      const gx = window.innerHeight - clientY;
+      const gy = clientX;
+      return { x: gx, y: gy, w: gameW, h: gameH };
+    }
     const rect = this.target.getBoundingClientRect();
-    const x = ((clientX - rect.left) / rect.width) * 2 - 1;
-    let y = -(((clientY - rect.top) / rect.height) * 2 - 1);
+    return { x: clientX - rect.left, y: clientY - rect.top, w: rect.width, h: rect.height };
+  }
+
+  _updateAimFromClient(clientX, clientY) {
+    const g = this._toGameSpace(clientX, clientY);
+    const x = (g.x / g.w) * 2 - 1;
+    let y = -((g.y / g.h) * 2 - 1);
     if (this.invertY) y = -y;
     this.aim.x = Math.max(-1, Math.min(1, x));
     this.aim.y = Math.max(-1, Math.min(1, y));
@@ -61,9 +81,13 @@ export class InputManager {
     if (!this.enabled) return;
     this._updateAimFromClient(e.clientX, e.clientY);
     if (this.charging) {
-      const rect = this.target.getBoundingClientRect();
-      const dx = (e.clientX - this.chargeStartPos.x) / (rect.width * 0.35);
-      this.dekeAmount = Math.max(-1, Math.min(1, dx));
+      // Screen-space delta maps to game-space delta (-dyScreen, dxScreen)
+      // under the rotate(-90deg) forced-landscape transform.
+      const dxScreen = e.clientX - this.chargeStartPos.x;
+      const dyScreen = e.clientY - this.chargeStartPos.y;
+      const dxGame = this.rotatedLandscape ? -dyScreen : dxScreen;
+      const gameWidth = this.rotatedLandscape ? window.innerHeight : this.target.getBoundingClientRect().width;
+      this.dekeAmount = Math.max(-1, Math.min(1, dxGame / (gameWidth * 0.35)));
     }
   }
 

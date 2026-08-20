@@ -19,7 +19,28 @@ html, body {
   background: var(--bg); color: var(--text);
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
   user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Force landscape on phones held upright: rotate the whole page 90deg to
+   fill the portrait screen instead of showing a cramped portrait layout.
+   iOS Safari has no orientation-lock API, so this CSS rotation is the only
+   reliable cross-browser way to do it. main.js reads the same media query
+   to swap width/height when sizing the WebGL renderer and camera. */
+@media (orientation: portrait) and (pointer: coarse) {
+  body {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vh;
+    height: 100vw;
+    width: 100dvh;
+    height: 100dvw;
+    transform-origin: top left;
+    transform: rotate(-90deg) translateX(-100%);
+  }
 }
 
 #game-canvas-container {
@@ -38,6 +59,7 @@ html, body {
   flex-direction: column;
   pointer-events: auto;
   background: radial-gradient(ellipse at 50% -10%, rgba(60,110,180,0.25), transparent 55%), rgba(3,6,12,0.72);
+  -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   overflow-y: auto;
 }
@@ -62,11 +84,15 @@ html, body {
 .boot-hint { color: var(--text-dim); font-size: 13px; opacity: 0.75; }
 
 /* ---------- Buttons ---------- */
+button {
+  -webkit-appearance: none; appearance: none;
+}
 .btn {
   font-family: inherit; font-size: 15px; font-weight: 600;
   padding: 12px 22px; border-radius: 10px; border: 1px solid var(--panel-border);
   background: rgba(30,42,64,0.8); color: var(--text);
   cursor: pointer; transition: transform 0.08s ease, background 0.15s ease, box-shadow 0.15s ease;
+  -webkit-appearance: none; appearance: none;
 }
 .btn:hover { background: rgba(50,68,98,0.9); }
 .btn:active { transform: scale(0.97); }
@@ -192,7 +218,7 @@ html, body {
 .setting-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: var(--panel); border: 1px solid var(--panel-border); border-radius: 12px; padding: 14px 18px; }
 .setting-row label { font-weight: 600; font-size: 14px; }
 .setting-row input[type=range] { width: 160px; accent-color: var(--ice); }
-.setting-row select { font-family: inherit; background: rgba(255,255,255,0.08); color: var(--text); border: 1px solid var(--panel-border); border-radius: 8px; padding: 6px 10px; }
+.setting-row select { font-family: inherit; background: rgba(255,255,255,0.08); color: var(--text); border: 1px solid var(--panel-border); border-radius: 8px; padding: 6px 10px; -webkit-appearance: none; appearance: none; }
 .toggle-switch { width: 44px; height: 24px; border-radius: 14px; background: rgba(255,255,255,0.15); position: relative; cursor: pointer; border: none; }
 .toggle-switch.on { background: var(--green); }
 .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: left 0.15s ease; }

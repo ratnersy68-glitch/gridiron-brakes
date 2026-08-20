@@ -47,13 +47,22 @@ function applyGraphicsQuality(quality) {
   }
 }
 
+const forceLandscapeQuery = matchMedia('(orientation: portrait) and (pointer: coarse)');
+
 function resize() {
-  const w = window.innerWidth, h = window.innerHeight;
+  // In forced-landscape mode (see style.css), the page is rotated 90deg via
+  // CSS to fill a portrait phone screen, so the renderer/camera need the
+  // swapped (landscape) dimensions to match what will actually be on screen.
+  const rotated = forceLandscapeQuery.matches;
+  const w = rotated ? window.innerHeight : window.innerWidth;
+  const h = rotated ? window.innerWidth : window.innerHeight;
   renderer.setSize(w, h);
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
 }
 window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', () => setTimeout(resize, 50));
+if (forceLandscapeQuery.addEventListener) forceLandscapeQuery.addEventListener('change', resize);
 resize();
 
 let rinkRefs = buildRink(scene, getArena(profile.lastArena));
@@ -77,6 +86,10 @@ scene.add(goalieModel);
 const effects = new EffectsManager(scene);
 const input = new InputManager(renderer.domElement);
 input.invertY = profile.settings.invertY;
+input.rotatedLandscape = forceLandscapeQuery.matches;
+if (forceLandscapeQuery.addEventListener) {
+  forceLandscapeQuery.addEventListener('change', () => { input.rotatedLandscape = forceLandscapeQuery.matches; });
+}
 applyGraphicsQuality(profile.settings.quality);
 
 const attemptController = new AttemptController({
